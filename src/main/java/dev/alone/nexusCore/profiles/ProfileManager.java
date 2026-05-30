@@ -103,6 +103,7 @@ public class ProfileManager {
         profile.setAutoPickup(getBoolean(config, true, "settings.auto-pickup", "auto-pickup"));
         profile.setAutoRebirth(getBoolean(config, false, "settings.auto-rebirth", "auto-rebirth"));
         profile.setAutoAscension(getBoolean(config, false, "settings.auto-ascension", "auto-ascension"));
+        profile.setHideMaxEnchants(getBoolean(config, false, "settings.hide-max-enchants", "hide-max-enchants"));
 
         profile.setPickaxeLevel(getInt(config, 1, "pickaxe.level"));
         profile.setPickaxeXp(getLong(config, 0L, "pickaxe.xp"));
@@ -157,6 +158,7 @@ public class ProfileManager {
         config.set("settings.auto-pickup", profile.isAutoPickup());
         config.set("settings.auto-rebirth", profile.isAutoRebirth());
         config.set("settings.auto-ascension", profile.isAutoAscension());
+        config.set("settings.hide-max-enchants", profile.isHideMaxEnchants());
 
         config.set("pickaxe.level", profile.getPickaxeLevel());
         config.set("pickaxe.xp", profile.getPickaxeXp());
