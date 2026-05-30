@@ -7,6 +7,7 @@ import dev.alone.nexusCore.utils.SoundUtil;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import java.math.BigInteger;
 import java.util.List;
 
 public final class ProgressionManager {
@@ -46,7 +47,12 @@ public final class ProgressionManager {
 
         profile.addBlocksMined(blocks);
         profile.addRawBlocksMined(blocks);
-        profile.addPickaxeXp(blocks * getPickaxeXpPerBlock());
+
+        if (plugin.getPickaxeManager() != null) {
+            plugin.getPickaxeManager().addPickaxeXp(player, profile, blocks * getPickaxeXpPerBlock());
+        } else {
+            profile.addPickaxeXp(blocks * getPickaxeXpPerBlock());
+        }
 
         if (!isAutomaticRankupEnabled()) {
             return;
@@ -82,20 +88,9 @@ public final class ProgressionManager {
 
         if (rankups > 0) {
             if (rankups == 1) {
-                sendProgressionMessage(
-                        player,
-                        "rankup",
-                        "<green>You ranked up to <aqua>Rank %rank%<green>!",
-                        profile
-                );
+                sendProgressionMessage(player, "rankup", "<green>You ranked up to <aqua>Rank %rank%<green>!", profile);
             } else {
-                sendProgressionMessage(
-                        player,
-                        "multi-rankup",
-                        "<green>You ranked up <aqua>%rankups%x <green>and reached <aqua>Rank %rank%<green>!",
-                        profile,
-                        rankups
-                );
+                sendProgressionMessage(player, "multi-rankup", "<green>You ranked up <aqua>%rankups%x <green>and reached <aqua>Rank %rank%<green>!", profile, rankups);
             }
 
             SoundUtil.play(player, "sounds.rankup");
@@ -106,12 +101,7 @@ public final class ProgressionManager {
         }
 
         if (rankups > 0) {
-            sendProgressionMessage(
-                    player,
-                    "max-rank",
-                    "<yellow>You reached max rank. Rank is now capped, so keep mining for rebirth progress.",
-                    profile
-            );
+            sendProgressionMessage(player, "max-rank", "<yellow>You reached max rank. Rank is now capped, so keep mining for rebirth progress.", profile);
         }
 
         int rebirthsProcessed = 0;
@@ -134,39 +124,43 @@ public final class ProgressionManager {
             return false;
         }
 
-        if (!canRebirth(profile)) {
+        if (!profile.canRebirth(plugin.getProfileManager().getMaxRank()) || profile.getRankProgressBlocks() < getBlocksRequiredForNextRebirth(profile)) {
             if (!automatic) {
-                sendProgressionMessage(
-                        player,
-                        "cannot-rebirth",
-                        "<red>You need <white>%blocks_remaining_rebirth% <red>more blocks before rebirthing.",
-                        profile
-                );
+                sendProgressionMessage(player, "cannot-rebirth", "<red>You need <white>%blocks_remaining_rebirth% <red>more blocks before rebirthing.", profile);
             }
 
+            return false;
+        }
+
+        BigInteger tokenCost = getRebirthTokenCost(profile);
+        BigInteger gemCost = getRebirthGemCost(profile);
+
+        if (profile.getTokens().compareTo(tokenCost) < 0) {
+            if (!automatic) {
+                sendProgressionMessage(player, "cannot-rebirth-tokens", "<red>You need <yellow>%rebirth_token_cost%</yellow><red> tokens to rebirth.", profile);
+            }
+            return false;
+        }
+
+        if (profile.getGems().compareTo(gemCost) < 0) {
+            if (!automatic) {
+                sendProgressionMessage(player, "cannot-rebirth-gems", "<red>You need <light_purple>%rebirth_gem_cost%</light_purple><red> gems to rebirth.", profile);
+            }
             return false;
         }
 
         int maxRank = plugin.getProfileManager().getMaxRank();
         long blocksRequired = getBlocksRequiredForNextRebirth(profile);
 
+        profile.removeTokens(tokenCost);
+        profile.removeGems(gemCost);
         profile.removeRankProgressBlocks(blocksRequired);
         profile.rebirth(maxRank);
 
         if (automatic) {
-            sendProgressionMessage(
-                    player,
-                    "auto-rebirth",
-                    "<light_purple>Rebirth complete! You are now <white>%rebirth%<light_purple>.",
-                    profile
-            );
+            sendProgressionMessage(player, "auto-rebirth", "<light_purple>Rebirth complete! You are now <white>%rebirth%<light_purple>.", profile);
         } else {
-            sendProgressionMessage(
-                    player,
-                    "rebirth",
-                    "<light_purple>You rebirthed! You are now <white>%rebirth%<light_purple>.",
-                    profile
-            );
+            sendProgressionMessage(player, "rebirth", "<light_purple>You rebirthed! You are now <white>%rebirth%<light_purple>.", profile);
         }
 
         SoundUtil.play(player, "sounds.rebirth");
@@ -189,12 +183,7 @@ public final class ProgressionManager {
 
         if (!profile.canAscend(rebirthsRequired)) {
             if (!automatic) {
-                sendProgressionMessage(
-                        player,
-                        "cannot-ascend",
-                        "<red>You need <white>%rebirths_until_ascension% <red>more rebirths before ascending.",
-                        profile
-                );
+                sendProgressionMessage(player, "cannot-ascend", "<red>You need <white>%rebirths_until_ascension% <red>more rebirths before ascending.", profile);
             }
 
             return false;
@@ -203,23 +192,12 @@ public final class ProgressionManager {
         profile.ascend(rebirthsRequired, maxRank);
 
         if (automatic) {
-            sendProgressionMessage(
-                    player,
-                    "auto-ascension",
-                    "<gold>Auto Ascension complete! Your rebirths have reset. You are now <white>%ascension%<gold>.",
-                    profile
-            );
+            sendProgressionMessage(player, "auto-ascension", "<gold>Auto Ascension complete! Your rebirths have reset. You are now <white>%ascension%<gold>.", profile);
         } else {
-            sendProgressionMessage(
-                    player,
-                    "ascension",
-                    "<gold>You ascended! Your rebirths have reset. You are now <white>%ascension%<gold>.",
-                    profile
-            );
+            sendProgressionMessage(player, "ascension", "<gold>You ascended! Your rebirths have reset. You are now <white>%ascension%<gold>.", profile);
         }
 
         SoundUtil.play(player, "sounds.ascension");
-
         plugin.getProfileManager().saveProfile(profile.getUuid());
         return true;
     }
@@ -230,8 +208,24 @@ public final class ProgressionManager {
         }
 
         int maxRank = plugin.getProfileManager().getMaxRank();
+        return profile.canRebirth(maxRank)
+                && profile.getRankProgressBlocks() >= getBlocksRequiredForNextRebirth(profile)
+                && profile.getTokens().compareTo(getRebirthTokenCost(profile)) >= 0
+                && profile.getGems().compareTo(getRebirthGemCost(profile)) >= 0;
+    }
 
-        return profile.canRebirth(maxRank) && profile.getRankProgressBlocks() >= getBlocksRequiredForNextRebirth(profile);
+    public BigInteger getRebirthTokenCost(PlayerProfile profile) {
+        BigInteger base = BigInteger.valueOf(plugin.getConfig().getLong("rebirth.costs.tokens.base", 100000));
+        BigInteger increase = BigInteger.valueOf(plugin.getConfig().getLong("rebirth.costs.tokens.increase-per-rebirth", 75000));
+        int rebirth = profile == null ? 0 : profile.getRebirth();
+        return base.add(increase.multiply(BigInteger.valueOf(Math.max(0, rebirth))));
+    }
+
+    public BigInteger getRebirthGemCost(PlayerProfile profile) {
+        BigInteger base = BigInteger.valueOf(plugin.getConfig().getLong("rebirth.costs.gems.base", 250));
+        BigInteger increase = BigInteger.valueOf(plugin.getConfig().getLong("rebirth.costs.gems.increase-per-rebirth", 175));
+        int rebirth = profile == null ? 0 : profile.getRebirth();
+        return base.add(increase.multiply(BigInteger.valueOf(Math.max(0, rebirth))));
     }
 
     public long getBlocksRequiredForNextRank(PlayerProfile profile) {
@@ -245,15 +239,11 @@ public final class ProgressionManager {
 
         long base = Math.max(1L, plugin.getConfig().getLong("progression.blocks-per-rank.base", 100L));
         long increasePerRank = Math.max(0L, plugin.getConfig().getLong("progression.blocks-per-rank.increase-per-rank", 25L));
-
         double rebirthMultiplier = Math.max(0.0, plugin.getConfig().getDouble("progression.blocks-per-rank.rebirth-multiplier", 0.15));
         double ascensionMultiplier = Math.max(0.0, plugin.getConfig().getDouble("progression.blocks-per-rank.ascension-multiplier", 0.35));
 
         long rawRequirement = base + ((long) Math.max(0, profile.getRank() - 1) * increasePerRank);
-        double multiplier = 1.0
-                + (profile.getRebirth() * rebirthMultiplier)
-                + (profile.getAscension() * ascensionMultiplier);
-
+        double multiplier = 1.0 + (profile.getRebirth() * rebirthMultiplier) + (profile.getAscension() * ascensionMultiplier);
         return Math.max(1L, Math.round(rawRequirement * multiplier));
     }
 
@@ -268,7 +258,6 @@ public final class ProgressionManager {
 
         long rawRequirement = base + ((long) profile.getRebirth() * increasePerRebirth);
         double multiplier = 1.0 + (profile.getAscension() * ascensionMultiplier);
-
         return Math.max(1L, Math.round(rawRequirement * multiplier));
     }
 
@@ -294,7 +283,6 @@ public final class ProgressionManager {
         }
 
         long required = getBlocksRequiredForNextRank(profile);
-
         if (required <= 0L) {
             return 100.0;
         }
@@ -389,9 +377,7 @@ public final class ProgressionManager {
             return false;
         }
 
-        List<String> excludedWorlds = plugin.getConfig().getStringList("progression.excluded-worlds");
-
-        for (String excludedWorld : excludedWorlds) {
+        for (String excludedWorld : plugin.getConfig().getStringList("progression.excluded-worlds")) {
             if (worldName.equalsIgnoreCase(excludedWorld)) {
                 return true;
             }
@@ -418,7 +404,6 @@ public final class ProgressionManager {
 
     private void sendProgressionMessage(Player player, String messageKey, String fallback, PlayerProfile profile, int rankups) {
         String message = plugin.getConfig().getString("messages.progression." + messageKey, fallback);
-
         int maxRank = plugin.getProfileManager().getMaxRank();
         int rebirthsRequired = plugin.getProfileManager().getRebirthsRequiredToAscend();
 
@@ -427,20 +412,19 @@ public final class ProgressionManager {
                 .replace("%rank%", String.valueOf(profile.getRank()))
                 .replace("%max_rank%", String.valueOf(maxRank))
                 .replace("%rankups%", String.valueOf(rankups))
-
                 .replace("%rebirth%", getColoredRebirth(profile))
                 .replace("%rebirth_raw%", String.valueOf(profile.getRebirth()))
-
                 .replace("%ascension%", getColoredAscension(profile))
                 .replace("%ascension_raw%", String.valueOf(profile.getAscension()))
-
                 .replace("%rebirths_required%", String.valueOf(rebirthsRequired))
                 .replace("%rebirths_until_ascension%", String.valueOf(profile.getRebirthsUntilAscension(rebirthsRequired)))
                 .replace("%blocks_progress_rebirth%", String.valueOf(profile.getRankProgressBlocks()))
                 .replace("%rebirth_progress%", String.valueOf(profile.getRankProgressBlocks()))
                 .replace("%blocks_required_rebirth%", String.valueOf(getBlocksRequiredForNextRebirth(profile)))
                 .replace("%rebirth_requirement%", String.valueOf(getBlocksRequiredForNextRebirth(profile)))
-                .replace("%blocks_remaining_rebirth%", String.valueOf(getBlocksRemainingForNextRebirth(profile)));
+                .replace("%blocks_remaining_rebirth%", String.valueOf(getBlocksRemainingForNextRebirth(profile)))
+                .replace("%rebirth_token_cost%", getRebirthTokenCost(profile).toString())
+                .replace("%rebirth_gem_cost%", getRebirthGemCost(profile).toString());
 
         MessageUtil.sendWithPrefix(player, message);
     }
