@@ -23,7 +23,18 @@ public enum PickaxeEnchant {
     GEM_MERCHANT("gem_merchant", "Gem Merchant", 200),
     SHOCKWAVE("shockwave", "Shockwave", 200),
     CLUSTER_BOMB("cluster_bomb", "Cluster Bomb", 225),
-    TOKEN_GREED("token_greed", "Token Greed", 250);
+    TOKEN_GREED("token_greed", "Token Greed", 250),
+    WILD_BLAZE("wild_blaze", "Wild Blaze", 275),
+    DOUBLE_STRIKE("double_strike", "Double Strike", 300),
+    GANG_POINT_FINDER("gang_point_finder", "Gang Point Finder", 325),
+    SNOW_ARMY("snow_army", "Snow Army", 350),
+    DRAGONS_WRATH("dragons_wrath", "Dragon's Wrath", 375),
+    SCAVENGER("scavenger", "Scavenger", 400),
+    ENDERMAN_ABOMINATION("enderman_abomination", "Enderman Abomination", 450),
+    VOLCANO("volcano", "Volcano", 475),
+    HYDROGEN_BOMB("hydrogen_bomb", "Hydrogen Bomb", 500),
+    PROPHET("prophet", "Prophet", 550),
+    BLACK_HOLE("black_hole", "Black Hole", 600);
 
     private final String id;
     private final String displayName;
@@ -53,6 +64,7 @@ public enum PickaxeEnchant {
         }
 
         String normalized = input.toLowerCase()
+                .replace("'", "")
                 .replace("-", "_")
                 .replace(" ", "_");
 
@@ -68,12 +80,20 @@ public enum PickaxeEnchant {
             normalized = "beacon_finder";
         }
 
+        if (normalized.equals("dragon_wrath")) {
+            normalized = "dragons_wrath";
+        }
+
+        if (normalized.equals("gang_points") || normalized.equals("gang_point_miner")) {
+            normalized = "gang_point_finder";
+        }
+
         for (PickaxeEnchant enchant : values()) {
             if (enchant.id.equalsIgnoreCase(normalized)) {
                 return enchant;
             }
 
-            if (enchant.displayName.toLowerCase().replace(" ", "_").equals(normalized)) {
+            if (enchant.displayName.toLowerCase().replace("'", "").replace(" ", "_").equals(normalized)) {
                 return enchant;
             }
         }
