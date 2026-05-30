@@ -81,7 +81,6 @@ public final class MenuListener implements Listener {
 
             MessageUtil.sendWithPrefix(player, "<gray>Auto Rebirth is now " + formatBoolean(profile.isAutoRebirth()) + "<gray>.");
             SoundUtil.play(player, "sounds.menus.toggle");
-
             new SettingsMenu(plugin).open(player, profile);
             return;
         }
@@ -92,7 +91,16 @@ public final class MenuListener implements Listener {
 
             MessageUtil.sendWithPrefix(player, "<gray>Auto Ascension is now " + formatBoolean(profile.isAutoAscension()) + "<gray>.");
             SoundUtil.play(player, "sounds.menus.toggle");
+            new SettingsMenu(plugin).open(player, profile);
+            return;
+        }
 
+        if (slot == holder.getHideMaxEnchantsSlot()) {
+            profile.setHideMaxEnchants(!profile.isHideMaxEnchants());
+            plugin.getProfileManager().saveProfile(player.getUniqueId());
+
+            MessageUtil.sendWithPrefix(player, "<gray>Hide Max Enchants is now " + formatBoolean(profile.isHideMaxEnchants()) + "<gray>.");
+            SoundUtil.play(player, "sounds.menus.toggle");
             new SettingsMenu(plugin).open(player, profile);
         }
     }
