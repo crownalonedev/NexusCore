@@ -9,11 +9,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -36,6 +34,13 @@ import java.util.Map;
 
 public class PickaxeManager {
 
+    private static final int[] ENCHANT_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
+
     private final NexusCore plugin;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
@@ -43,25 +48,24 @@ public class PickaxeManager {
     private final NamespacedKey menuActionKey;
     private final NamespacedKey enchantKey;
     private final NamespacedKey slotKey;
+    private final NamespacedKey upgradeAmountKey;
 
     private final File menuFile;
     private final File enchantFolder;
     private final Map<PickaxeEnchant, YamlConfiguration> enchantConfigs = new HashMap<>();
 
     private YamlConfiguration menuConfig;
-
-    private int hasteTaskId = -1;
+    private int passiveTaskId = -1;
 
     public PickaxeManager(NexusCore plugin) {
         this.plugin = plugin;
-
         this.pickaxeKey = new NamespacedKey(plugin, "nexus_pickaxe");
         this.menuActionKey = new NamespacedKey(plugin, "nexus_menu_action");
         this.enchantKey = new NamespacedKey(plugin, "nexus_pickaxe_enchant");
         this.slotKey = new NamespacedKey(plugin, "nexus_pickaxe_slot");
+        this.upgradeAmountKey = new NamespacedKey(plugin, "nexus_upgrade_amount");
 
         File guisFolder = new File(plugin.getDataFolder(), "guis");
-
         if (!guisFolder.exists()) {
             guisFolder.mkdirs();
         }
@@ -69,8 +73,8 @@ public class PickaxeManager {
         this.menuFile = new File(guisFolder, "pickaxe-enchant-menu.yml");
         this.enchantFolder = new File(plugin.getDataFolder(), "enchant");
 
-        if (!enchantFolder.exists() && !enchantFolder.mkdirs()) {
-            plugin.getLogger().warning("Failed to create enchant folder.");
+        if (!enchantFolder.exists()) {
+            enchantFolder.mkdirs();
         }
 
         createDefaultMenuFile();
@@ -84,58 +88,41 @@ public class PickaxeManager {
     }
 
     public void shutdown() {
-        if (hasteTaskId != -1) {
-            Bukkit.getScheduler().cancelTask(hasteTaskId);
-            hasteTaskId = -1;
+        if (passiveTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(passiveTaskId);
+            passiveTaskId = -1;
         }
     }
 
     public void startTasks() {
-        if (hasteTaskId != -1) {
-            Bukkit.getScheduler().cancelTask(hasteTaskId);
-        }
+        shutdown();
 
-        hasteTaskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        passiveTaskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                ItemStack item = player.getInventory().getItemInMainHand();
+                PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+                updateExperienceBar(player, profile);
 
+                ItemStack item = player.getInventory().getItemInMainHand();
                 if (!isNexusPickaxe(item)) {
                     continue;
                 }
 
-                PlayerProfile profile = plugin.getProfileManager().getProfile(player);
-
                 int hasteLevel = profile.getEnchantLevel(PickaxeEnchant.HASTE);
-
                 if (hasteLevel > 0 && isEnchantEnabled(PickaxeEnchant.HASTE)) {
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.HASTE,
-                            80,
-                            Math.max(0, hasteLevel - 1),
-                            true,
-                            false,
-                            false
-                    ));
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 80, Math.max(0, hasteLevel - 1), true, false, false));
                 }
 
                 int speedLevel = profile.getEnchantLevel(PickaxeEnchant.SPEED);
-
                 if (speedLevel > 0 && isEnchantEnabled(PickaxeEnchant.SPEED)) {
-                    player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.SPEED,
-                            80,
-                            Math.max(0, speedLevel - 1),
-                            true,
-                            false,
-                            false
-                    ));
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 80, Math.max(0, speedLevel - 1), true, false, false));
                 }
             }
-        }, 20L, 40L).getTaskId();
+        }, 20L, 20L).getTaskId();
     }
 
     public void handleJoin(Player player) {
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+        ensureEfficiencyMaxed(profile);
 
         boolean autoGiveFirstJoin = plugin.getConfig().getBoolean("pickaxe.auto-give-on-first-join", true);
         boolean giveIfMissing = plugin.getConfig().getBoolean("pickaxe.give-if-missing-on-join", true);
@@ -147,7 +134,62 @@ public class PickaxeManager {
             syncPickaxe(player);
             profile.setReceivedPickaxe(true);
             plugin.getProfileManager().saveProfile(profile);
+        } else {
+            syncPickaxe(player);
         }
+
+        updateExperienceBar(player, profile);
+    }
+
+    public void addPickaxeXp(Player player, PlayerProfile profile, long amount) {
+        if (player == null || profile == null || amount <= 0) {
+            return;
+        }
+
+        profile.addPickaxeXp(amount);
+
+        int levelsGained = 0;
+        while (profile.getPickaxeLevel() < getMaxPickaxeLevel()) {
+            long needed = getXpRequiredForNextPickaxeLevel(profile.getPickaxeLevel());
+            if (profile.getPickaxeXp() < needed) {
+                break;
+            }
+
+            profile.setPickaxeXp(profile.getPickaxeXp() - needed);
+            profile.setPickaxeLevel(profile.getPickaxeLevel() + 1);
+            levelsGained++;
+        }
+
+        if (levelsGained > 0) {
+            send(player, "<gradient:#00CFFF:#0066FF><bold>PICKAXE LEVEL UP!</bold></gradient> <gray>You reached level <aqua>" + profile.getPickaxeLevel() + "</aqua><gray>.");
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
+            syncPickaxe(player);
+        }
+
+        updateExperienceBar(player, profile);
+    }
+
+    public void updateExperienceBar(Player player, PlayerProfile profile) {
+        if (player == null || profile == null) {
+            return;
+        }
+
+        int level = profile.getPickaxeLevel();
+        long required = getXpRequiredForNextPickaxeLevel(level);
+        float progress = required <= 0 ? 1.0f : Math.max(0.0f, Math.min(1.0f, (float) profile.getPickaxeXp() / (float) required));
+
+        player.setLevel(level);
+        player.setExp(level >= getMaxPickaxeLevel() ? 1.0f : progress);
+    }
+
+    public long getXpRequiredForNextPickaxeLevel(int level) {
+        long base = Math.max(1L, plugin.getConfig().getLong("pickaxe.leveling.xp-base", 250L));
+        long increase = Math.max(0L, plugin.getConfig().getLong("pickaxe.leveling.xp-increase-per-level", 125L));
+        return base + (Math.max(1, level) - 1L) * increase;
+    }
+
+    public int getMaxPickaxeLevel() {
+        return Math.max(1, plugin.getConfig().getInt("pickaxe.leveling.max-level", 500));
     }
 
     public boolean hasPickaxe(Player player) {
@@ -162,17 +204,16 @@ public class PickaxeManager {
 
     public void syncPickaxe(Player player) {
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
-        int slot = profile.getPickaxeSlot();
+        ensureEfficiencyMaxed(profile);
 
+        int slot = profile.getPickaxeSlot();
         PlayerInventory inventory = player.getInventory();
 
         removeAllPickaxes(player);
 
         ItemStack current = inventory.getItem(slot);
-
         if (!isAir(current)) {
             int emptySlot = firstEmptySlotExcept(inventory, slot);
-
             if (emptySlot == -1) {
                 player.getWorld().dropItemNaturally(player.getLocation(), current);
             } else {
@@ -182,23 +223,21 @@ public class PickaxeManager {
 
         inventory.setItem(slot, createPickaxe(player));
         player.updateInventory();
+        updateExperienceBar(player, profile);
     }
 
     public void setPickaxeSlot(Player player, int slot) {
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
-
         profile.setPickaxeSlot(slot);
         profile.setReceivedPickaxe(true);
-
         plugin.getProfileManager().saveProfile(profile);
-
         syncPickaxe(player);
-
         send(player, "<green>Your Nexus Pickaxe slot has been changed to <aqua>" + (profile.getPickaxeSlot() + 1) + "</aqua><green>.");
     }
 
     public ItemStack createPickaxe(Player player) {
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+        ensureEfficiencyMaxed(profile);
 
         Material material = getMaterial(plugin.getConfig().getString("pickaxe.material", "NETHERITE_PICKAXE"), Material.NETHERITE_PICKAXE);
         ItemStack item = new ItemStack(material);
@@ -212,26 +251,28 @@ public class PickaxeManager {
         meta.displayName(color(name));
 
         List<Component> lore = new ArrayList<>();
-
         for (String line : plugin.getConfig().getStringList("pickaxe.lore")) {
+            if (line.contains("%fortune%")) {
+                continue;
+            }
             lore.add(color(replacePickaxePlaceholders(line, player, profile)));
+        }
+
+        List<String> dynamicLore = buildDynamicEnchantLore(profile);
+        if (!dynamicLore.isEmpty()) {
+            lore.add(color(""));
+            lore.add(color("<gradient:#00CFFF:#0066FF><bold>Unlocked Enchants</bold></gradient>"));
+            for (String line : dynamicLore) {
+                lore.add(color(line));
+            }
         }
 
         meta.lore(lore);
         meta.setUnbreakable(true);
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(pickaxeKey, PersistentDataType.STRING, "true");
 
-        int efficiency = profile.getEnchantLevel(PickaxeEnchant.EFFICIENCY);
-        int fortune = profile.getEnchantLevel(PickaxeEnchant.FORTUNE);
-
-        if (efficiency > 0) {
-            meta.addEnchant(Enchantment.EFFICIENCY, efficiency, true);
-        }
-
-        if (fortune > 0) {
-            meta.addEnchant(Enchantment.FORTUNE, fortune, true);
-        }
+        meta.addEnchant(Enchantment.EFFICIENCY, getMaxLevel(PickaxeEnchant.EFFICIENCY), true);
 
         for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
             meta.getPersistentDataContainer().set(enchantLevelKey(enchant), PersistentDataType.INTEGER, profile.getEnchantLevel(enchant));
@@ -241,85 +282,139 @@ public class PickaxeManager {
         return item;
     }
 
+    private List<String> buildDynamicEnchantLore(PlayerProfile profile) {
+        List<String> lore = new ArrayList<>();
+
+        for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
+            if (enchant == PickaxeEnchant.EFFICIENCY) {
+                lore.add("  <gray>Efficiency: <aqua>MAX</aqua>");
+                continue;
+            }
+
+            int level = profile.getEnchantLevel(enchant);
+            if (level <= 0) {
+                continue;
+            }
+
+            lore.add("  <gray>" + enchant.getDisplayName() + ": <aqua>" + level + "</aqua>");
+        }
+
+        return lore;
+    }
+
+    private void ensureEfficiencyMaxed(PlayerProfile profile) {
+        if (profile == null) {
+            return;
+        }
+
+        int max = getMaxLevel(PickaxeEnchant.EFFICIENCY);
+        if (profile.getEnchantLevel(PickaxeEnchant.EFFICIENCY) < max) {
+            profile.setEnchantLevel(PickaxeEnchant.EFFICIENCY, max);
+        }
+    }
+
     private NamespacedKey enchantLevelKey(PickaxeEnchant enchant) {
         return new NamespacedKey(plugin, "nexus_pickaxe_level_" + enchant.getId());
     }
 
     public boolean isNexusPickaxe(ItemStack item) {
-        if (isAir(item)) {
-            return false;
-        }
-
-        if (!item.hasItemMeta()) {
+        if (isAir(item) || !item.hasItemMeta()) {
             return false;
         }
 
         ItemMeta meta = item.getItemMeta();
-
-        if (meta == null) {
-            return false;
-        }
-
-        return meta.getPersistentDataContainer().has(pickaxeKey, PersistentDataType.STRING);
+        return meta != null && meta.getPersistentDataContainer().has(pickaxeKey, PersistentDataType.STRING);
     }
 
     public void openEnchantMenu(Player player) {
         String title = getEnchantMenuTitle();
         int rows = Math.max(1, Math.min(6, menuConfig.getInt("enchants-menu.rows", 6)));
-
         Inventory inventory = Bukkit.createInventory(null, rows * 9, title);
-
         fillMenu(inventory, "enchants-menu.filler");
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+        updateExperienceBar(player, profile);
 
         int previewSlot = menuConfig.getInt("enchants-menu.pickaxe-preview.slot", 4);
-        ItemStack preview = createActionItem(
+        inventory.setItem(previewSlot, createActionItem(
                 Material.NETHERITE_PICKAXE,
                 replacePickaxePlaceholders(menuConfig.getString("enchants-menu.pickaxe-preview.name", "<aqua><bold>Nexus Pickaxe</bold>"), player, profile),
                 replacePickaxeLore(menuConfig.getStringList("enchants-menu.pickaxe-preview.lore"), player, profile),
                 "slot_selector"
-        );
-        inventory.setItem(previewSlot, preview);
+        ));
 
-        ConfigurationSection itemsSection = menuConfig.getConfigurationSection("enchants-menu.items");
-
-        if (itemsSection != null) {
-            for (String key : itemsSection.getKeys(false)) {
-                PickaxeEnchant enchant = PickaxeEnchant.fromInput(key);
-
-                if (enchant == null || !isEnchantEnabled(enchant)) {
-                    continue;
-                }
-
-                String path = "enchants-menu.items." + key;
-                int slot = menuConfig.getInt(path + ".slot", 20);
-                inventory.setItem(slot, createEnchantItem(player, enchant, path));
+        int index = 0;
+        for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
+            if (!isEnchantEnabled(enchant)) {
+                continue;
             }
+            if (index >= ENCHANT_SLOTS.length) {
+                break;
+            }
+
+            inventory.setItem(ENCHANT_SLOTS[index], createEnchantItem(player, enchant));
+            index++;
         }
 
         int changeSlot = menuConfig.getInt("enchants-menu.change-slot.slot", 49);
-        Material changeMaterial = getMaterial(menuConfig.getString("enchants-menu.change-slot.material", "NETHERITE_PICKAXE"), Material.NETHERITE_PICKAXE);
-
-        ItemStack changeSlotItem = createActionItem(
-                changeMaterial,
+        inventory.setItem(changeSlot, createActionItem(
+                getMaterial(menuConfig.getString("enchants-menu.change-slot.material", "NETHERITE_PICKAXE"), Material.NETHERITE_PICKAXE),
                 replacePickaxePlaceholders(menuConfig.getString("enchants-menu.change-slot.name", "<aqua><bold>Change Pickaxe Slot</bold>"), player, profile),
                 replacePickaxeLore(menuConfig.getStringList("enchants-menu.change-slot.lore"), player, profile),
                 "slot_selector"
-        );
-
-        inventory.setItem(changeSlot, changeSlotItem);
+        ));
 
         player.openInventory(inventory);
         playMenuSound(player, "sounds.menus.open");
     }
 
+    public void openUpgradeMenu(Player player, PickaxeEnchant enchant) {
+        PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+        Inventory inventory = Bukkit.createInventory(null, 45, getUpgradeMenuTitle(enchant));
+        fillMenu(inventory, "upgrade-menu.filler");
+
+        inventory.setItem(13, createEnchantItem(player, enchant));
+
+        setUpgradeButton(inventory, 20, player, profile, enchant, 1, "<#00CFFF><bold>+1 Level</bold>");
+        setUpgradeButton(inventory, 21, player, profile, enchant, 5, "<#00CFFF><bold>+5 Levels</bold>");
+        setUpgradeButton(inventory, 22, player, profile, enchant, 25, "<#00CFFF><bold>+25 Levels</bold>");
+        setUpgradeButton(inventory, 23, player, profile, enchant, 50, "<#0066FF><bold>+50 Levels</bold>");
+        setUpgradeButton(inventory, 24, player, profile, enchant, 100, "<#0066FF><bold>+100 Levels</bold>");
+        setUpgradeButton(inventory, 31, player, profile, enchant, -1, "<gradient:#FCFC54:#FCA800><bold>MAX UPGRADE</bold></gradient>");
+
+        inventory.setItem(40, createActionItem(Material.ARROW, "<yellow><bold>Back</bold>", List.of("", "<gray>Return to the enchant list."), "back_enchants"));
+
+        player.openInventory(inventory);
+        playMenuSound(player, "sounds.menus.open");
+    }
+
+    private void setUpgradeButton(Inventory inventory, int slot, Player player, PlayerProfile profile, PickaxeEnchant enchant, int amount, String name) {
+        int realAmount = amount == -1 ? getMaxAffordableAmount(player, enchant) : amount;
+        BigInteger cost = getTotalUpgradeCost(enchant, profile.getEnchantLevel(enchant), realAmount);
+
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        lore.add("<gray>Enchant: <aqua>" + enchant.getDisplayName());
+        lore.add("<gray>Current Level: <aqua>" + profile.getEnchantLevel(enchant) + "</aqua><gray>/<aqua>" + getMaxLevel(enchant));
+        lore.add("<gray>Upgrade Amount: <aqua>" + (realAmount <= 0 ? 0 : realAmount));
+        lore.add("<gray>Cost: <yellow>" + format(cost) + "</yellow><gray> tokens");
+        lore.add("");
+        lore.add(realAmount <= 0 ? "<red>No affordable levels available." : "<yellow>Click to purchase.");
+
+        ItemStack item = createActionItem(Material.LIME_DYE, name, lore, "buy_upgrade");
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.getPersistentDataContainer().set(enchantKey, PersistentDataType.STRING, enchant.getId());
+            meta.getPersistentDataContainer().set(upgradeAmountKey, PersistentDataType.INTEGER, realAmount);
+            item.setItemMeta(meta);
+        }
+
+        inventory.setItem(slot, item);
+    }
+
     public void openSlotMenu(Player player) {
         String title = getSlotMenuTitle();
-        int rows = Math.max(1, Math.min(6, menuConfig.getInt("slot-menu.rows", 3)));
-
-        Inventory inventory = Bukkit.createInventory(null, rows * 9, title);
-
+        Inventory inventory = Bukkit.createInventory(null, Math.max(1, Math.min(6, menuConfig.getInt("slot-menu.rows", 3))) * 9, title);
         fillMenu(inventory, "slot-menu.filler");
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
@@ -328,7 +423,6 @@ public class PickaxeManager {
 
         for (int hotbarSlot = 0; hotbarSlot < 9; hotbarSlot++) {
             boolean current = hotbarSlot == currentSlot;
-
             Material material = current
                     ? getMaterial(menuConfig.getString("slot-menu.slots.current-material", "LIME_STAINED_GLASS_PANE"), Material.LIME_STAINED_GLASS_PANE)
                     : getMaterial(menuConfig.getString("slot-menu.slots.available-material", "LIGHT_BLUE_STAINED_GLASS_PANE"), Material.LIGHT_BLUE_STAINED_GLASS_PANE);
@@ -341,20 +435,12 @@ public class PickaxeManager {
                     ? menuConfig.getStringList("slot-menu.slots.current-lore")
                     : menuConfig.getStringList("slot-menu.slots.available-lore");
 
-            ItemStack item = createActionItem(
-                    material,
-                    name.replace("%slot%", String.valueOf(hotbarSlot + 1)),
-                    replaceSlotLore(lore, hotbarSlot),
-                    "pickaxe_slot"
-            );
-
+            ItemStack item = createActionItem(material, name.replace("%slot%", String.valueOf(hotbarSlot + 1)), replaceSlotLore(lore, hotbarSlot), "pickaxe_slot");
             ItemMeta meta = item.getItemMeta();
-
             if (meta != null) {
                 meta.getPersistentDataContainer().set(slotKey, PersistentDataType.INTEGER, hotbarSlot);
                 item.setItemMeta(meta);
             }
-
             inventory.setItem(startSlot + hotbarSlot, item);
         }
 
@@ -364,23 +450,17 @@ public class PickaxeManager {
 
     public boolean handleMenuClick(Player player, InventoryClickEvent event) {
         String title = event.getView().getTitle();
-
-        if (!title.equals(getEnchantMenuTitle()) && !title.equals(getSlotMenuTitle())) {
+        if (!title.equals(getEnchantMenuTitle()) && !title.equals(getSlotMenuTitle()) && !title.startsWith("Upgrade ")) {
             return false;
         }
 
         event.setCancelled(true);
 
-        if (event.getClickedInventory() == null) {
-            return true;
-        }
-
-        if (!event.getClickedInventory().equals(event.getView().getTopInventory())) {
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(event.getView().getTopInventory())) {
             return true;
         }
 
         ItemStack clicked = event.getCurrentItem();
-
         if (isAir(clicked)) {
             return true;
         }
@@ -394,24 +474,38 @@ public class PickaxeManager {
 
         if ("pickaxe_slot".equalsIgnoreCase(action)) {
             Integer slot = getMenuSlot(clicked);
-
             if (slot != null) {
                 setPickaxeSlot(player, slot);
                 openEnchantMenu(player);
             }
-
             return true;
         }
 
-        if ("upgrade_enchant".equalsIgnoreCase(action)) {
+        if ("open_upgrade".equalsIgnoreCase(action)) {
             PickaxeEnchant enchant = getMenuEnchant(clicked);
-
             if (enchant != null) {
-                int amount = getUpgradeAmountFromClick(player, enchant, event.getClick());
-                upgradeEnchant(player, enchant, amount);
-                openEnchantMenu(player);
+                if (!isUnlocked(player, enchant)) {
+                    send(player, "<red>You need Pickaxe Level <white>" + getUnlockLevel(enchant) + "</white><red> to unlock " + enchant.getDisplayName() + ".");
+                    playMenuSound(player, "sounds.menus.toggle");
+                    return true;
+                }
+                openUpgradeMenu(player, enchant);
             }
+            return true;
+        }
 
+        if ("buy_upgrade".equalsIgnoreCase(action)) {
+            PickaxeEnchant enchant = getMenuEnchant(clicked);
+            Integer amount = getUpgradeAmount(clicked);
+            if (enchant != null && amount != null) {
+                upgradeEnchant(player, enchant, amount);
+                openUpgradeMenu(player, enchant);
+            }
+            return true;
+        }
+
+        if ("back_enchants".equalsIgnoreCase(action)) {
+            openEnchantMenu(player);
             return true;
         }
 
@@ -423,6 +517,11 @@ public class PickaxeManager {
 
         if (!isEnchantEnabled(enchant)) {
             send(player, "<red>That enchant is currently disabled.");
+            return;
+        }
+
+        if (!isUnlocked(player, enchant)) {
+            send(player, "<red>You need Pickaxe Level <white>" + getUnlockLevel(enchant) + "</white><red> to unlock " + enchant.getDisplayName() + ".");
             return;
         }
 
@@ -444,20 +543,17 @@ public class PickaxeManager {
 
         while (upgraded < amount) {
             currentLevel = profile.getEnchantLevel(enchant);
-
             if (currentLevel >= maxLevel) {
                 break;
             }
 
             BigInteger cost = getUpgradeTokenCost(enchant, currentLevel);
-
             if (profile.getTokens().compareTo(cost) < 0) {
                 break;
             }
 
             profile.removeTokens(cost);
             profile.addEnchantLevel(enchant, 1);
-
             totalCost = totalCost.add(cost);
             upgraded++;
         }
@@ -471,17 +567,12 @@ public class PickaxeManager {
         plugin.getProfileManager().saveProfile(profile);
         syncPickaxe(player);
 
-        send(player, "<green>Upgraded <aqua>" + enchant.getDisplayName() + "</aqua><green> by <white>" + upgraded + "</white><green> level(s).");
+        send(player, "<gradient:#00CFFF:#0066FF><bold>ENCHANT UPGRADED!</bold></gradient> <gray>" + enchant.getDisplayName() + " <dark_gray>»</dark_gray> <aqua>+" + upgraded + "</aqua> <gray>level(s)");
         send(player, "<gray>Cost: <yellow>" + format(totalCost) + "</yellow><gray> tokens.");
-
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.4F);
     }
 
     public YamlConfiguration getEnchantConfig(PickaxeEnchant enchant) {
-        if (enchant == null) {
-            return new YamlConfiguration();
-        }
-
         return enchantConfigs.getOrDefault(enchant, new YamlConfiguration());
     }
 
@@ -507,7 +598,6 @@ public class PickaxeManager {
 
     public BigInteger getEnchantBigInteger(PickaxeEnchant enchant, String path, BigInteger fallback) {
         String value = getEnchantString(enchant, path, null);
-
         if (value == null || value.isBlank()) {
             return fallback;
         }
@@ -524,112 +614,123 @@ public class PickaxeManager {
         return getEnchantBoolean(enchant, "enabled", true);
     }
 
+    public boolean isProcMessagesEnabled(PickaxeEnchant enchant) {
+        return plugin.getConfig().getBoolean("pickaxe.enchant-processing.proc-messages.enabled", true)
+                && getEnchantBoolean(enchant, "proc-message.enabled", true);
+    }
+
+    public String getProcMessage(PickaxeEnchant enchant) {
+        return getEnchantString(enchant, "proc-message.text", "<gradient:#00CFFF:#0066FF><bold>" + enchant.getDisplayName() + "</bold></gradient> <gray>activated!");
+    }
+
     public int getMaxLevel(PickaxeEnchant enchant) {
-        return getEnchantInt(enchant, "max-level", 100);
+        return getEnchantInt(enchant, "max-level", enchant == PickaxeEnchant.EFFICIENCY ? 255 : 100);
+    }
+
+    public int getUnlockLevel(PickaxeEnchant enchant) {
+        return getEnchantInt(enchant, "unlock-pickaxe-level", enchant.getUnlockLevel());
+    }
+
+    public boolean isUnlocked(Player player, PickaxeEnchant enchant) {
+        if (enchant == PickaxeEnchant.EFFICIENCY) {
+            return true;
+        }
+        PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+        return profile.getPickaxeLevel() >= getUnlockLevel(enchant);
     }
 
     public BigInteger getUpgradeTokenCost(PickaxeEnchant enchant, int currentLevel) {
         BigInteger base = getEnchantBigInteger(enchant, "base-token-cost", BigInteger.valueOf(1000));
         BigInteger increase = getEnchantBigInteger(enchant, "token-cost-increase", BigInteger.valueOf(500));
-
         return base.add(increase.multiply(BigInteger.valueOf(Math.max(0, currentLevel))));
     }
 
-    private ItemStack createEnchantItem(Player player, PickaxeEnchant enchant, String path) {
-        PlayerProfile profile = plugin.getProfileManager().getProfile(player);
+    public BigInteger getTotalUpgradeCost(PickaxeEnchant enchant, int currentLevel, int amount) {
+        if (amount <= 0) {
+            return BigInteger.ZERO;
+        }
 
+        BigInteger total = BigInteger.ZERO;
+        int max = getMaxLevel(enchant);
+        for (int i = 0; i < amount && currentLevel + i < max; i++) {
+            total = total.add(getUpgradeTokenCost(enchant, currentLevel + i));
+        }
+        return total;
+    }
+
+    private ItemStack createEnchantItem(Player player, PickaxeEnchant enchant) {
+        PlayerProfile profile = plugin.getProfileManager().getProfile(player);
         int level = profile.getEnchantLevel(enchant);
         int maxLevel = getMaxLevel(enchant);
         BigInteger nextCost = getUpgradeTokenCost(enchant, level);
+        boolean unlocked = isUnlocked(player, enchant);
 
-        Material material = getMaterial(menuConfig.getString(path + ".material", "BOOK"), Material.BOOK);
-        String name = menuConfig.getString(path + ".name", "<aqua><bold>" + enchant.getDisplayName() + "</bold>");
+        Material material = getMaterial(getEnchantString(enchant, "material", defaultMaterial(enchant).name()), defaultMaterial(enchant));
+        String name = unlocked
+                ? getEnchantString(enchant, "menu-name", "<gradient:#00CFFF:#0066FF><bold>" + enchant.getDisplayName() + "</bold></gradient>")
+                : getEnchantString(enchant, "locked-menu-name", "<gray>" + enchant.getDisplayName() + " <red>- Locked");
 
         List<String> lore = new ArrayList<>();
-
-        for (String line : menuConfig.getStringList(path + ".lore")) {
-            lore.add(replaceEnchantPlaceholders(line, player, profile, enchant, level, maxLevel, nextCost));
+        if (unlocked) {
+            lore.add("<dark_gray>Unlocked Enchant");
+            lore.add("");
+            lore.add(getEnchantString(enchant, "description", "<gray>Upgrade this enchant."));
+            lore.add("");
+            lore.add("<gray>Level: <aqua>" + level + "</aqua><gray>/<aqua>" + maxLevel);
+            lore.add("<gray>Next Level: <yellow>" + format(nextCost) + "</yellow><gray> tokens");
+            lore.add("");
+            lore.add(level >= maxLevel ? "<green><bold>MAXED</bold>" : "<yellow>Click to upgrade.");
+        } else {
+            lore.add("<dark_gray>Locked Enchant");
+            lore.add("");
+            lore.add(getEnchantString(enchant, "description", "<gray>Upgrade this enchant."));
+            lore.add("");
+            lore.add("<gray>Unlock at Pickaxe Level <aqua>" + getUnlockLevel(enchant));
         }
 
-        ItemStack item = createActionItem(material, name, lore, "upgrade_enchant");
+        ItemStack item = createActionItem(material, name, lore, "open_upgrade");
         ItemMeta meta = item.getItemMeta();
-
         if (meta != null) {
             meta.getPersistentDataContainer().set(enchantKey, PersistentDataType.STRING, enchant.getId());
             item.setItemMeta(meta);
         }
-
         return item;
     }
 
-    private String replaceEnchantPlaceholders(
-            String text,
-            Player player,
-            PlayerProfile profile,
-            PickaxeEnchant enchant,
-            int level,
-            int maxLevel,
-            BigInteger nextCost
-    ) {
-        String status;
-
-        if (level >= maxLevel) {
-            status = "<green><bold>MAXED</bold></green>";
-        } else if (profile.getTokens().compareTo(nextCost) >= 0) {
-            status = "<green>Click to upgrade.";
-        } else {
-            status = "<red>Not enough tokens.";
-        }
-
-        return text
-                .replace("%player%", player.getName())
-                .replace("%enchant%", enchant.getDisplayName())
-                .replace("%level%", String.valueOf(level))
-                .replace("%max_level%", String.valueOf(maxLevel))
-                .replace("%next_cost%", format(nextCost))
-                .replace("%tokens%", format(profile.getTokens()))
-                .replace("%slot%", String.valueOf(profile.getPickaxeSlot() + 1))
-                .replace("%status%", status);
-    }
-
     private String replacePickaxePlaceholders(String text, Player player, PlayerProfile profile) {
-        return text
+        String replaced = text
                 .replace("%player%", player.getName())
                 .replace("%slot%", String.valueOf(profile.getPickaxeSlot() + 1))
                 .replace("%tokens%", format(profile.getTokens()))
                 .replace("%gems%", format(profile.getGems()))
+                .replace("%beacons%", format(profile.getBeacons()))
                 .replace("%pickaxe_level%", String.valueOf(profile.getPickaxeLevel()))
                 .replace("%pickaxe_xp%", String.valueOf(profile.getPickaxeXp()))
-                .replace("%efficiency%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.EFFICIENCY)))
-                .replace("%fortune%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.FORTUNE)))
-                .replace("%haste%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.HASTE)))
-                .replace("%speed%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.SPEED)))
-                .replace("%token_finder%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.TOKEN_FINDER)))
-                .replace("%gem_finder%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.GEM_FINDER)))
-                .replace("%key_finder%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.KEY_FINDER)))
-                .replace("%lucky%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.LUCKY)))
-                .replace("%explosive%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.EXPLOSIVE)))
-                .replace("%jackhammer%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.JACKHAMMER)))
-                .replace("%laser%", String.valueOf(profile.getEnchantLevel(PickaxeEnchant.LASER)));
+                .replace("%pickaxe_xp_required%", String.valueOf(getXpRequiredForNextPickaxeLevel(profile.getPickaxeLevel())));
+
+        for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
+            replaced = replaced.replace("%" + enchant.getId() + "%", String.valueOf(profile.getEnchantLevel(enchant)));
+        }
+
+        return replaced.replace("%fortune%", "0");
     }
 
     private List<String> replacePickaxeLore(List<String> lines, Player player, PlayerProfile profile) {
         List<String> replaced = new ArrayList<>();
-
         for (String line : lines) {
+            if (line.contains("%fortune%")) {
+                continue;
+            }
             replaced.add(replacePickaxePlaceholders(line, player, profile));
         }
-
         return replaced;
     }
 
     private List<String> replaceSlotLore(List<String> lines, int hotbarSlot) {
         List<String> replaced = new ArrayList<>();
-
         for (String line : lines) {
             replaced.add(line.replace("%slot%", String.valueOf(hotbarSlot + 1)));
         }
-
         return replaced;
     }
 
@@ -637,13 +738,12 @@ public class PickaxeManager {
         if (!menuConfig.getBoolean(path + ".enabled", true)) {
             return;
         }
-
-        Material material = getMaterial(menuConfig.getString(path + ".material", "BLACK_STAINED_GLASS_PANE"), Material.BLACK_STAINED_GLASS_PANE);
-        String name = menuConfig.getString(path + ".name", " ");
-        List<String> lore = menuConfig.getStringList(path + ".lore");
-
-        ItemStack filler = createActionItem(material, name, lore, "filler");
-
+        ItemStack filler = createActionItem(
+                getMaterial(menuConfig.getString(path + ".material", "BLACK_STAINED_GLASS_PANE"), Material.BLACK_STAINED_GLASS_PANE),
+                menuConfig.getString(path + ".name", " "),
+                menuConfig.getStringList(path + ".lore"),
+                "filler"
+        );
         for (int slot = 0; slot < inventory.getSize(); slot++) {
             inventory.setItem(slot, filler);
         }
@@ -652,23 +752,17 @@ public class PickaxeManager {
     private ItemStack createActionItem(Material material, String name, List<String> loreLines, String action) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
-
         if (meta == null) {
             return item;
         }
-
         meta.displayName(color(name));
-
         List<Component> lore = new ArrayList<>();
-
         for (String line : loreLines) {
             lore.add(color(line));
         }
-
         meta.lore(lore);
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(menuActionKey, PersistentDataType.STRING, action);
-
         item.setItemMeta(meta);
         return item;
     }
@@ -677,14 +771,8 @@ public class PickaxeManager {
         if (isAir(item) || !item.hasItemMeta()) {
             return "";
         }
-
         ItemMeta meta = item.getItemMeta();
-
-        if (meta == null) {
-            return "";
-        }
-
-        String action = meta.getPersistentDataContainer().get(menuActionKey, PersistentDataType.STRING);
+        String action = meta == null ? null : meta.getPersistentDataContainer().get(menuActionKey, PersistentDataType.STRING);
         return action == null ? "" : action;
     }
 
@@ -692,14 +780,8 @@ public class PickaxeManager {
         if (isAir(item) || !item.hasItemMeta()) {
             return null;
         }
-
         ItemMeta meta = item.getItemMeta();
-
-        if (meta == null) {
-            return null;
-        }
-
-        String id = meta.getPersistentDataContainer().get(enchantKey, PersistentDataType.STRING);
+        String id = meta == null ? null : meta.getPersistentDataContainer().get(enchantKey, PersistentDataType.STRING);
         return PickaxeEnchant.fromInput(id);
     }
 
@@ -707,31 +789,20 @@ public class PickaxeManager {
         if (isAir(item) || !item.hasItemMeta()) {
             return null;
         }
-
         ItemMeta meta = item.getItemMeta();
-
-        if (meta == null) {
-            return null;
-        }
-
-        return meta.getPersistentDataContainer().get(slotKey, PersistentDataType.INTEGER);
+        return meta == null ? null : meta.getPersistentDataContainer().get(slotKey, PersistentDataType.INTEGER);
     }
 
-    private int getUpgradeAmountFromClick(Player player, PickaxeEnchant enchant, ClickType clickType) {
-        if (clickType.isShiftClick()) {
-            return getMaxAffordableAmount(player, enchant);
+    private Integer getUpgradeAmount(ItemStack item) {
+        if (isAir(item) || !item.hasItemMeta()) {
+            return null;
         }
-
-        if (clickType.isRightClick()) {
-            return 10;
-        }
-
-        return 1;
+        ItemMeta meta = item.getItemMeta();
+        return meta == null ? null : meta.getPersistentDataContainer().get(upgradeAmountKey, PersistentDataType.INTEGER);
     }
 
     private int getMaxAffordableAmount(Player player, PickaxeEnchant enchant) {
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
-
         int amount = 0;
         int level = profile.getEnchantLevel(enchant);
         int maxLevel = getMaxLevel(enchant);
@@ -739,30 +810,24 @@ public class PickaxeManager {
 
         while (level < maxLevel) {
             BigInteger cost = getUpgradeTokenCost(enchant, level);
-
             if (tokens.compareTo(cost) < 0) {
                 break;
             }
-
             tokens = tokens.subtract(cost);
-            level++;
             amount++;
+            level++;
         }
-
         return amount;
     }
 
     private void removeAllPickaxes(Player player) {
         PlayerInventory inventory = player.getInventory();
-
         for (int slot = 0; slot < inventory.getSize(); slot++) {
             ItemStack item = inventory.getItem(slot);
-
             if (isNexusPickaxe(item)) {
                 inventory.setItem(slot, null);
             }
         }
-
         if (isNexusPickaxe(inventory.getItemInOffHand())) {
             inventory.setItemInOffHand(null);
         }
@@ -773,12 +838,10 @@ public class PickaxeManager {
             if (slot == excludedSlot) {
                 continue;
             }
-
             if (isAir(inventory.getItem(slot))) {
                 return slot;
             }
         }
-
         return -1;
     }
 
@@ -790,18 +853,16 @@ public class PickaxeManager {
         return menuConfig.getString("slot-menu.title", "Nexus Pickaxe Slot");
     }
 
+    private String getUpgradeMenuTitle(PickaxeEnchant enchant) {
+        return "Upgrade " + enchant.getDisplayName();
+    }
+
     private Material getMaterial(String input, Material fallback) {
         if (input == null) {
             return fallback;
         }
-
         Material material = Material.matchMaterial(input);
-
-        if (material == null) {
-            return fallback;
-        }
-
-        return material;
+        return material == null ? fallback : material;
     }
 
     private boolean isAir(ItemStack item) {
@@ -812,7 +873,6 @@ public class PickaxeManager {
         if (message == null || message.isEmpty()) {
             message = " ";
         }
-
         return miniMessage.deserialize(message).decoration(TextDecoration.ITALIC, false);
     }
 
@@ -828,45 +888,33 @@ public class PickaxeManager {
         if (!plugin.getConfig().getBoolean(path + ".enabled", true)) {
             return;
         }
-
         String soundName = plugin.getConfig().getString(path + ".sound", "UI_BUTTON_CLICK");
         float volume = (float) plugin.getConfig().getDouble(path + ".volume", 1.0);
         float pitch = (float) plugin.getConfig().getDouble(path + ".pitch", 1.2);
-
         try {
-            Sound sound = Sound.valueOf(soundName.toUpperCase());
+            Sound sound = Sound.valueOf(soundName.toUpperCase(Locale.ROOT));
             player.playSound(player.getLocation(), sound, volume, pitch);
         } catch (IllegalArgumentException ignored) {
-            // Invalid sound in config.
         }
     }
 
     private void createDefaultEnchantFiles() {
         for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
             File file = getEnchantFile(enchant);
-
             if (file.exists()) {
                 continue;
             }
-
-            try {
-                plugin.saveResource("enchant/" + enchant.getId() + ".yml", false);
-            } catch (IllegalArgumentException exception) {
-                createFallbackEnchantFile(enchant, file);
-            }
+            createFallbackEnchantFile(enchant, file);
         }
     }
 
     private void loadEnchantFiles() {
         enchantConfigs.clear();
-
         for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
             File file = getEnchantFile(enchant);
-
             if (!file.exists()) {
                 createFallbackEnchantFile(enchant, file);
             }
-
             enchantConfigs.put(enchant, YamlConfiguration.loadConfiguration(file));
         }
     }
@@ -878,7 +926,6 @@ public class PickaxeManager {
     private void createFallbackEnchantFile(PickaxeEnchant enchant, File file) {
         YamlConfiguration config = new YamlConfiguration();
         applyFallbackEnchantDefaults(config, enchant);
-
         try {
             config.save(file);
             plugin.getLogger().info("Created default enchant file: enchant/" + enchant.getId() + ".yml");
@@ -891,97 +938,132 @@ public class PickaxeManager {
     private void applyFallbackEnchantDefaults(YamlConfiguration config, PickaxeEnchant enchant) {
         config.set("enabled", true);
         config.set("display-name", enchant.getDisplayName());
+        config.set("unlock-pickaxe-level", enchant.getUnlockLevel());
+        config.set("material", defaultMaterial(enchant).name());
+        config.set("menu-name", "<gradient:#00CFFF:#0066FF><bold>" + enchant.getDisplayName() + "</bold></gradient>");
+        config.set("locked-menu-name", "<gray>" + enchant.getDisplayName() + " <red>- Locked");
+        config.set("description", defaultDescription(enchant));
+        config.set("proc-message.enabled", true);
+        config.set("proc-message.text", "<gradient:#00CFFF:#0066FF><bold>" + enchant.getDisplayName() + "</bold></gradient> <dark_gray>»</dark_gray> <gray>Activated on <aqua>%blocks%</aqua><gray> block(s)!");
+
+        config.set("max-level", enchant == PickaxeEnchant.EFFICIENCY ? 255 : 500);
+        config.set("base-token-cost", "1000");
+        config.set("token-cost-increase", "500");
+        config.set("base-chance", 0.0);
+        config.set("chance-per-level", 0.02);
+        config.set("max-chance", 35.0);
+        config.set("min-reward", "1");
+        config.set("max-reward", "3");
+        config.set("reward-per-level", "1");
+        config.set("levels-per-extra-reward", 25);
+        config.set("extra-reward", "5");
+        config.set("reward-multiplier", 1.0);
+        config.set("max-reward-rolls-per-break", 350);
 
         switch (enchant) {
-            case EFFICIENCY -> setCostDefaults(config, 250, 250, 125);
-            case FORTUNE -> setCostDefaults(config, 150, 500, 225);
-            case HASTE, SPEED -> setCostDefaults(config, 5, 2500, 2500);
+            case EFFICIENCY -> {
+                config.set("max-level", 255);
+                config.set("base-token-cost", "0");
+                config.set("token-cost-increase", "0");
+            }
+            case HASTE, SPEED -> {
+                config.set("max-level", 10);
+                config.set("base-token-cost", "200000");
+                config.set("token-cost-increase", "6500000");
+            }
             case TOKEN_FINDER -> {
-                setCostDefaults(config, 2500, 1000, 450);
-                setRewardDefaults(config, 8.0, 0.035, 90.0, "50", "250", "8", 10, "25", 1.0, 350);
-            }
-            case GEM_FINDER -> {
-                setCostDefaults(config, 1500, 2500, 900);
-                setRewardDefaults(config, 3.0, 0.018, 55.0, "2", "8", "1", 25, "10", 1.0, 350);
-            }
-            case KEY_FINDER -> {
-                setCostDefaults(config, 100, 25000, 10000);
-                config.set("base-chance", 0.0);
-                config.set("chance-per-level", 0.006);
-                config.set("max-chance", 5.0);
-                config.set("min-reward", "1");
-                config.set("max-reward", "1");
-                config.set("levels-per-extra-reward", 100000);
-                config.set("extra-reward", "0");
-                config.set("max-reward-rolls-per-break", 350);
-                config.set("commands", List.of("crate key give %player% mine %amount%"));
-            }
-            case LUCKY -> {
-                setCostDefaults(config, 250, 3500, 1250);
-                config.set("chance-boost-per-level", 0.02);
-                config.set("reward-boost-percent-per-level", 0.25);
-            }
-            case EXPLOSIVE -> {
-                setCostDefaults(config, 100, 5000, 1750);
-                config.set("base-chance", 0.0);
-                config.set("chance-per-level", 0.065);
-                config.set("max-chance", 30.0);
-                config.set("radius", 1);
-                config.set("radius-increase-every-levels", 50);
-                config.set("max-radius", 3);
-                config.set("max-extra-blocks", 80);
+                config.set("max-level", 7500);
+                config.set("base-token-cost", "45");
+                config.set("token-cost-increase", "2500");
+                config.set("base-chance", 100.0);
+                config.set("chance-per-level", 0.0);
+                config.set("max-chance", 100.0);
+                config.set("min-reward", "50");
+                config.set("max-reward", "250");
+                config.set("reward-per-level", "8");
             }
             case JACKHAMMER -> {
-                setCostDefaults(config, 100, 7500, 2500);
-                config.set("base-chance", 0.0);
-                config.set("chance-per-level", 0.035);
-                config.set("max-chance", 20.0);
-                config.set("horizontal-radius", 4);
-                config.set("radius-increase-every-levels", 40);
-                config.set("max-horizontal-radius", 8);
-                config.set("max-extra-blocks", 256);
-            }
-            case LASER -> {
-                setCostDefaults(config, 100, 6500, 2200);
-                config.set("base-chance", 0.0);
-                config.set("chance-per-level", 0.05);
+                config.set("max-level", 500);
+                config.set("chance-per-level", 0.04);
                 config.set("max-chance", 25.0);
-                config.set("length", 8);
-                config.set("length-increase-every-levels", 25);
-                config.set("max-length", 32);
+            }
+            case GEM_FINDER, BEACON_FINDER -> {
+                config.set("max-level", 500);
+                config.set("base-token-cost", "250000");
+                config.set("token-cost-increase", "15000");
+                config.set("base-chance", 2.0);
+                config.set("chance-per-level", 0.03);
+                config.set("max-chance", 40.0);
+            }
+            case KEY_FINDER -> {
+                config.set("max-level", 500);
+                config.set("base-token-cost", "500000");
+                config.set("token-cost-increase", "25000");
+                config.set("base-chance", 0.0);
+                config.set("chance-per-level", 0.01);
+                config.set("max-chance", 10.0);
+                config.set("commands", List.of("crate key give %player% mine %amount%"));
+            }
+            default -> {
+                config.set("max-level", 500);
+                config.set("base-token-cost", "100000");
+                config.set("token-cost-increase", "10000");
             }
         }
     }
 
-    private void setCostDefaults(YamlConfiguration config, int maxLevel, long baseCost, long costIncrease) {
-        config.set("max-level", maxLevel);
-        config.set("base-token-cost", String.valueOf(baseCost));
-        config.set("token-cost-increase", String.valueOf(costIncrease));
+    private Material defaultMaterial(PickaxeEnchant enchant) {
+        return switch (enchant) {
+            case EFFICIENCY -> Material.DIAMOND_PICKAXE;
+            case HASTE -> Material.SUGAR;
+            case SPEED -> Material.FEATHER;
+            case TOKEN_FINDER -> Material.SUNFLOWER;
+            case JACKHAMMER -> Material.ANVIL;
+            case MINE_STRIKE -> Material.FIRE_CHARGE;
+            case GEM_FINDER -> Material.EMERALD;
+            case BEACON_FINDER -> Material.PRISMARINE_CRYSTALS;
+            case VEIN_MINER -> Material.GOLDEN_PICKAXE;
+            case KEY_FINDER -> Material.TRIPWIRE_HOOK;
+            case TOKEN_EXPLOSION -> Material.TNT;
+            case NUKE -> Material.TNT_MINECART;
+            case METEOR -> Material.MAGMA_CREAM;
+            case TOKEN_MERCHANT -> Material.GOLD_INGOT;
+            case SECOND_HAND -> Material.IRON_PICKAXE;
+            case HOLY_ARROWS -> Material.ARROW;
+            case KEY_MERCHANT -> Material.COPPER_INGOT;
+            case METEOR_STRIKE -> Material.BLAZE_POWDER;
+            case GEM_MERCHANT -> Material.EMERALD_BLOCK;
+            case SHOCKWAVE -> Material.PRISMARINE_SHARD;
+            case CLUSTER_BOMB -> Material.SLIME_BALL;
+            case TOKEN_GREED -> Material.GOLD_BLOCK;
+        };
     }
 
-    private void setRewardDefaults(
-            YamlConfiguration config,
-            double baseChance,
-            double chancePerLevel,
-            double maxChance,
-            String minReward,
-            String maxReward,
-            String rewardPerLevel,
-            int levelsPerExtraReward,
-            String extraReward,
-            double rewardMultiplier,
-            int maxRewardRolls
-    ) {
-        config.set("base-chance", baseChance);
-        config.set("chance-per-level", chancePerLevel);
-        config.set("max-chance", maxChance);
-        config.set("min-reward", minReward);
-        config.set("max-reward", maxReward);
-        config.set("reward-per-level", rewardPerLevel);
-        config.set("levels-per-extra-reward", levelsPerExtraReward);
-        config.set("extra-reward", extraReward);
-        config.set("reward-multiplier", rewardMultiplier);
-        config.set("max-reward-rolls-per-break", maxRewardRolls);
+    private String defaultDescription(PickaxeEnchant enchant) {
+        return switch (enchant) {
+            case EFFICIENCY -> "<gray>Your pickaxe is always max efficiency.";
+            case HASTE -> "<gray>Increase your mining speed.";
+            case SPEED -> "<gray>Increase your running and flying speed.";
+            case TOKEN_FINDER -> "<gray>Earn more Tokens with every block you break.";
+            case JACKHAMMER -> "<gray>Breaks the entire layer of your mine when activated.";
+            case MINE_STRIKE -> "<gray>Blasts a chunk of the mine for extra Tokens.";
+            case GEM_FINDER -> "<gray>Grants Gems while mining.";
+            case BEACON_FINDER -> "<gray>Earn Beacons as you mine.";
+            case VEIN_MINER -> "<gray>Breaks blocks horizontally and vertically.";
+            case KEY_FINDER -> "<gray>Has a chance to find crate keys while mining.";
+            case TOKEN_EXPLOSION -> "<gray>Multiplies Tokens from Token Miner.";
+            case NUKE -> "<gray>Destroys your mine in a single blast.";
+            case METEOR -> "<gray>Summons meteors that grant Tokens and Gems.";
+            case TOKEN_MERCHANT -> "<gray>Increases Tokens earned from Token Miner.";
+            case SECOND_HAND -> "<gray>Mines virtual blocks and procs enchants again.";
+            case HOLY_ARROWS -> "<gray>Spawns explosive arrows, granting Tokens.";
+            case KEY_MERCHANT -> "<gray>Multiplies keys found from Key Finder.";
+            case METEOR_STRIKE -> "<gray>Unleashes firestorms that grant Tokens and Gems.";
+            case GEM_MERCHANT -> "<gray>Multiplies Gems from Gem Finder.";
+            case SHOCKWAVE -> "<gray>Releases expanding shockwave rings.";
+            case CLUSTER_BOMB -> "<gray>Summons slime bombs that explode your mine.";
+            case TOKEN_GREED -> "<gray>Gives a large amount of Tokens when activated.";
+        };
     }
 
     private void createDefaultMenuFile() {
@@ -990,47 +1072,33 @@ public class PickaxeManager {
         }
 
         YamlConfiguration config = new YamlConfiguration();
-
         config.set("enchants-menu.title", "Nexus Pickaxe Enchants");
         config.set("enchants-menu.rows", 6);
         config.set("enchants-menu.filler.enabled", true);
         config.set("enchants-menu.filler.material", "BLACK_STAINED_GLASS_PANE");
         config.set("enchants-menu.filler.name", " ");
         config.set("enchants-menu.filler.lore", List.of());
-
         config.set("enchants-menu.pickaxe-preview.slot", 4);
         config.set("enchants-menu.pickaxe-preview.name", "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Nexus Pickaxe</bold></gradient>");
         config.set("enchants-menu.pickaxe-preview.lore", List.of(
                 "",
                 "<gray>Owner: <aqua>%player%</aqua>",
-                "<gray>Pickaxe Slot: <aqua>%slot%</aqua>",
+                "<gray>Pickaxe Level: <aqua>%pickaxe_level%</aqua>",
+                "<gray>Pickaxe XP: <aqua>%pickaxe_xp%</aqua><dark_gray>/</dark_gray><aqua>%pickaxe_xp_required%</aqua>",
                 "<gray>Tokens: <yellow>%tokens%</yellow>",
+                "<gray>Gems: <light_purple>%gems%</light_purple>",
+                "<gray>Beacons: <aqua>%beacons%</aqua>",
                 "",
                 "<yellow>Click to change your pickaxe slot."
         ));
-
-        setDefaultEnchant(config, "efficiency", 20, "DIAMOND_PICKAXE", "Efficiency", "Makes your pickaxe mine faster.");
-        setDefaultEnchant(config, "fortune", 21, "EMERALD", "Fortune", "Boosts drops from ores.");
-        setDefaultEnchant(config, "haste", 22, "SUGAR", "Haste", "Gives haste while holding your pickaxe.");
-        setDefaultEnchant(config, "speed", 23, "FEATHER", "Speed", "Gives speed while holding your pickaxe.");
-        setDefaultEnchant(config, "token_finder", 24, "SUNFLOWER", "Token Finder", "Finds extra tokens while mining.");
-        setDefaultEnchant(config, "gem_finder", 29, "AMETHYST_SHARD", "Gem Finder", "Finds gems while mining.");
-        setDefaultEnchant(config, "key_finder", 30, "TRIPWIRE_HOOK", "Key Finder", "Finds crate keys while mining.");
-        setDefaultEnchant(config, "lucky", 31, "RABBIT_FOOT", "Lucky", "Boosts reward enchant chances and amounts.");
-        setDefaultEnchant(config, "explosive", 32, "TNT", "Explosive", "Breaks nearby blocks while mining.");
-        setDefaultEnchant(config, "jackhammer", 33, "ANVIL", "Jackhammer", "Breaks a layer of blocks while mining.");
-        setDefaultEnchant(config, "laser", 34, "END_ROD", "Laser", "Breaks a straight line of blocks while mining.");
-
         config.set("enchants-menu.change-slot.slot", 49);
         config.set("enchants-menu.change-slot.material", "NETHERITE_PICKAXE");
         config.set("enchants-menu.change-slot.name", "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Change Pickaxe Slot</bold></gradient>");
-        config.set("enchants-menu.change-slot.lore", List.of(
-                "",
-                "<gray>Current Slot: <aqua>%slot%</aqua>",
-                "",
-                "<yellow>Click to choose slots 1-9."
-        ));
-
+        config.set("enchants-menu.change-slot.lore", List.of("", "<gray>Current Slot: <aqua>%slot%</aqua>", "", "<yellow>Click to choose slots 1-9."));
+        config.set("upgrade-menu.filler.enabled", true);
+        config.set("upgrade-menu.filler.material", "BLACK_STAINED_GLASS_PANE");
+        config.set("upgrade-menu.filler.name", " ");
+        config.set("upgrade-menu.filler.lore", List.of());
         config.set("slot-menu.title", "Nexus Pickaxe Slot");
         config.set("slot-menu.rows", 3);
         config.set("slot-menu.filler.enabled", true);
@@ -1051,26 +1119,5 @@ public class PickaxeManager {
             plugin.getLogger().severe("Could not create guis/pickaxe-enchant-menu.yml.");
             exception.printStackTrace();
         }
-    }
-
-    private void setDefaultEnchant(YamlConfiguration config, String id, int slot, String material, String displayName, String description) {
-        String path = "enchants-menu.items." + id;
-
-        config.set(path + ".slot", slot);
-        config.set(path + ".material", material);
-        config.set(path + ".name", "<gradient:#00CFFF:#54FCFC:#008CFC><bold>" + displayName + "</bold></gradient>");
-        config.set(path + ".lore", List.of(
-                "",
-                "<gray>Current Level: <aqua>%level%</aqua><gray>/<aqua>%max_level%</aqua>",
-                "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens",
-                "",
-                "<gray>" + description,
-                "",
-                "<yellow>Left-click: <white>+1 Level",
-                "<yellow>Right-click: <white>+10 Levels",
-                "<yellow>Shift-click: <white>Max Affordable",
-                "",
-                "%status%"
-        ));
     }
 }
