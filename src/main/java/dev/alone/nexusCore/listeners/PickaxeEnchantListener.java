@@ -8,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -73,12 +72,42 @@ public final class PickaxeEnchantListener implements Listener {
 
         int affectedBlocks = 1;
 
-        if (shouldProc(PickaxeEnchant.JACKHAMMER, profile)) {
-            affectedBlocks += breakLayer(player, block, profile.getEnchantLevel(PickaxeEnchant.JACKHAMMER));
-        } else if (shouldProc(PickaxeEnchant.LASER, profile)) {
-            affectedBlocks += breakLaser(player, block, profile.getEnchantLevel(PickaxeEnchant.LASER));
-        } else if (shouldProc(PickaxeEnchant.EXPLOSIVE, profile)) {
-            affectedBlocks += breakExplosion(player, block, profile.getEnchantLevel(PickaxeEnchant.EXPLOSIVE));
+        if (shouldProc(PickaxeEnchant.NUKE, profile)) {
+            int broken = breakCube(player, block, 16, 2500);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.NUKE, broken);
+        } else if (shouldProc(PickaxeEnchant.JACKHAMMER, profile)) {
+            int broken = breakLayer(player, block);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.JACKHAMMER, broken);
+        } else if (shouldProc(PickaxeEnchant.MINE_STRIKE, profile)) {
+            int broken = breakCube(player, block, 3, 320);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.MINE_STRIKE, broken);
+        } else if (shouldProc(PickaxeEnchant.VEIN_MINER, profile)) {
+            int broken = breakVein(player, block, 5, 220);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.VEIN_MINER, broken);
+        } else if (shouldProc(PickaxeEnchant.METEOR_STRIKE, profile)) {
+            int broken = breakCube(player, block, 6, 900);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.METEOR_STRIKE, broken);
+        } else if (shouldProc(PickaxeEnchant.METEOR, profile)) {
+            int broken = breakCube(player, block, 4, 450);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.METEOR, broken);
+        } else if (shouldProc(PickaxeEnchant.SHOCKWAVE, profile)) {
+            int broken = breakRing(player, block, 7, 600);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.SHOCKWAVE, broken);
+        } else if (shouldProc(PickaxeEnchant.CLUSTER_BOMB, profile)) {
+            int broken = breakCube(player, block, 5, 650);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.CLUSTER_BOMB, broken);
+        } else if (shouldProc(PickaxeEnchant.HOLY_ARROWS, profile)) {
+            int broken = breakColumns(player, block, 8, 500);
+            affectedBlocks += broken;
+            sendProcMessage(player, PickaxeEnchant.HOLY_ARROWS, broken);
         }
 
         int extraBlocks = Math.max(0, affectedBlocks - 1);
@@ -93,54 +122,17 @@ public final class PickaxeEnchantListener implements Listener {
             giveRewards(player, profile, rewards);
         }
 
-        if (affectedBlocks > 1 || rewards.hasAnyReward()) {
-            plugin.getProfileManager().saveProfile(profile);
-        }
+        plugin.getProfileManager().saveProfile(profile);
+        plugin.getPickaxeManager().syncPickaxe(player);
     }
 
-    private int breakExplosion(Player player, Block origin, int level) {
-        int radius = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.EXPLOSIVE, "radius", 1));
-        int bonusEvery = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.EXPLOSIVE, "radius-increase-every-levels", 50));
-        int maxRadius = Math.max(radius, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.EXPLOSIVE, "max-radius", 3));
-        int finalRadius = Math.min(maxRadius, radius + (level / bonusEvery));
-        int maxBlocks = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.EXPLOSIVE, "max-extra-blocks", 80));
-
+    private int breakLayer(Player player, Block origin) {
         int broken = 0;
+        int maxBlocks = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.JACKHAMMER, "max-extra-blocks", 5000));
+        int radius = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.JACKHAMMER, "layer-radius", 64));
 
-        for (int x = -finalRadius; x <= finalRadius; x++) {
-            for (int y = -finalRadius; y <= finalRadius; y++) {
-                for (int z = -finalRadius; z <= finalRadius; z++) {
-                    if (x == 0 && y == 0 && z == 0) {
-                        continue;
-                    }
-
-                    if (broken >= maxBlocks) {
-                        return broken;
-                    }
-
-                    Block nearby = origin.getRelative(x, y, z);
-
-                    if (breakExtraBlock(player, origin, nearby)) {
-                        broken++;
-                    }
-                }
-            }
-        }
-
-        return broken;
-    }
-
-    private int breakLayer(Player player, Block origin, int level) {
-        int radius = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.JACKHAMMER, "horizontal-radius", 4));
-        int bonusEvery = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.JACKHAMMER, "radius-increase-every-levels", 40));
-        int maxRadius = Math.max(radius, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.JACKHAMMER, "max-horizontal-radius", 8));
-        int finalRadius = Math.min(maxRadius, radius + (level / bonusEvery));
-        int maxBlocks = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.JACKHAMMER, "max-extra-blocks", 256));
-
-        int broken = 0;
-
-        for (int x = -finalRadius; x <= finalRadius; x++) {
-            for (int z = -finalRadius; z <= finalRadius; z++) {
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
                 if (x == 0 && z == 0) {
                     continue;
                 }
@@ -160,28 +152,95 @@ public final class PickaxeEnchantListener implements Listener {
         return broken;
     }
 
-    private int breakLaser(Player player, Block origin, int level) {
-        int length = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.LASER, "length", 8));
-        int bonusEvery = Math.max(1, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.LASER, "length-increase-every-levels", 25));
-        int maxLength = Math.max(length, plugin.getPickaxeManager().getEnchantInt(PickaxeEnchant.LASER, "max-length", 32));
-        int finalLength = Math.min(maxLength, length + (level / bonusEvery));
-
-        BlockFace face = player.getFacing();
-        int modX = face.getModX();
-        int modY = face.getModY();
-        int modZ = face.getModZ();
-
-        if (modX == 0 && modY == 0 && modZ == 0) {
-            return 0;
-        }
-
+    private int breakCube(Player player, Block origin, int radius, int maxBlocks) {
         int broken = 0;
 
-        for (int distance = 1; distance <= finalLength; distance++) {
-            Block next = origin.getRelative(modX * distance, modY * distance, modZ * distance);
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    if (x == 0 && y == 0 && z == 0) {
+                        continue;
+                    }
 
-            if (breakExtraBlock(player, origin, next)) {
-                broken++;
+                    if (broken >= maxBlocks) {
+                        return broken;
+                    }
+
+                    if (breakExtraBlock(player, origin, origin.getRelative(x, y, z))) {
+                        broken++;
+                    }
+                }
+            }
+        }
+
+        return broken;
+    }
+
+    private int breakVein(Player player, Block origin, int radius, int maxBlocks) {
+        int broken = 0;
+
+        for (int distance = 1; distance <= radius; distance++) {
+            Block[] blocks = {
+                    origin.getRelative(distance, 0, 0),
+                    origin.getRelative(-distance, 0, 0),
+                    origin.getRelative(0, distance, 0),
+                    origin.getRelative(0, -distance, 0),
+                    origin.getRelative(0, 0, distance),
+                    origin.getRelative(0, 0, -distance)
+            };
+
+            for (Block block : blocks) {
+                if (broken >= maxBlocks) {
+                    return broken;
+                }
+
+                if (breakExtraBlock(player, origin, block)) {
+                    broken++;
+                }
+            }
+        }
+
+        return broken;
+    }
+
+    private int breakRing(Player player, Block origin, int radius, int maxBlocks) {
+        int broken = 0;
+
+        for (int r = 1; r <= radius; r++) {
+            for (int x = -r; x <= r; x++) {
+                for (int z = -r; z <= r; z++) {
+                    if (Math.abs(x) != r && Math.abs(z) != r) {
+                        continue;
+                    }
+
+                    if (broken >= maxBlocks) {
+                        return broken;
+                    }
+
+                    if (breakExtraBlock(player, origin, origin.getRelative(x, 0, z))) {
+                        broken++;
+                    }
+                }
+            }
+        }
+
+        return broken;
+    }
+
+    private int breakColumns(Player player, Block origin, int radius, int maxBlocks) {
+        int broken = 0;
+
+        for (int x = -radius; x <= radius; x += 2) {
+            for (int z = -radius; z <= radius; z += 2) {
+                for (int y = 0; y >= -6; y--) {
+                    if (broken >= maxBlocks) {
+                        return broken;
+                    }
+
+                    if (breakExtraBlock(player, origin, origin.getRelative(x, y, z))) {
+                        broken++;
+                    }
+                }
             }
         }
 
@@ -214,9 +273,24 @@ public final class PickaxeEnchantListener implements Listener {
     private RewardResult rollRewards(Player player, PlayerProfile profile, int affectedBlocks) {
         RewardResult result = new RewardResult();
 
-        result.tokens = rollCurrencyReward(PickaxeEnchant.TOKEN_FINDER, profile, affectedBlocks);
-        result.gems = rollCurrencyReward(PickaxeEnchant.GEM_FINDER, profile, affectedBlocks);
+        result.tokens = result.tokens.add(rollCurrencyReward(PickaxeEnchant.TOKEN_FINDER, profile, affectedBlocks));
+        result.tokens = result.tokens.add(rollCurrencyReward(PickaxeEnchant.TOKEN_MERCHANT, profile, affectedBlocks));
+        result.tokens = result.tokens.add(rollCurrencyReward(PickaxeEnchant.TOKEN_EXPLOSION, profile, affectedBlocks));
+        result.tokens = result.tokens.add(rollCurrencyReward(PickaxeEnchant.TOKEN_GREED, profile, affectedBlocks));
+
+        result.gems = result.gems.add(rollCurrencyReward(PickaxeEnchant.GEM_FINDER, profile, affectedBlocks));
+        result.gems = result.gems.add(rollCurrencyReward(PickaxeEnchant.GEM_MERCHANT, profile, affectedBlocks));
+        result.gems = result.gems.add(rollCurrencyReward(PickaxeEnchant.METEOR, profile, affectedBlocks));
+        result.gems = result.gems.add(rollCurrencyReward(PickaxeEnchant.METEOR_STRIKE, profile, affectedBlocks));
+
+        result.beacons = result.beacons.add(rollCurrencyReward(PickaxeEnchant.BEACON_FINDER, profile, affectedBlocks));
         result.keys = rollKeyReward(profile, affectedBlocks);
+
+        int keyMerchantLevel = profile.getEnchantLevel(PickaxeEnchant.KEY_MERCHANT);
+        if (result.keys > 0 && keyMerchantLevel > 0 && plugin.getPickaxeManager().isEnchantEnabled(PickaxeEnchant.KEY_MERCHANT)) {
+            int multiplier = 1 + Math.max(0, keyMerchantLevel / 50);
+            result.keys *= multiplier;
+        }
 
         return result;
     }
@@ -234,7 +308,6 @@ public final class PickaxeEnchantListener implements Listener {
 
         int maxRolls = Math.max(1, plugin.getPickaxeManager().getEnchantInt(enchant, "max-reward-rolls-per-break", 350));
         int rolls = Math.min(affectedBlocks, maxRolls);
-
         BigInteger total = BigInteger.ZERO;
 
         for (int i = 0; i < rolls; i++) {
@@ -284,11 +357,9 @@ public final class PickaxeEnchantListener implements Listener {
 
     private BigInteger rollRewardAmount(PickaxeEnchant enchant, PlayerProfile profile) {
         int level = profile.getEnchantLevel(enchant);
-
         BigInteger minimum = plugin.getPickaxeManager().getEnchantBigInteger(enchant, "min-reward", BigInteger.ONE).max(BigInteger.ONE);
         BigInteger maximum = plugin.getPickaxeManager().getEnchantBigInteger(enchant, "max-reward", minimum).max(minimum);
         BigInteger perLevelReward = plugin.getPickaxeManager().getEnchantBigInteger(enchant, "reward-per-level", BigInteger.ZERO).max(BigInteger.ZERO);
-
         int levelsPerExtra = Math.max(1, plugin.getPickaxeManager().getEnchantInt(enchant, "levels-per-extra-reward", 25));
         BigInteger extraReward = plugin.getPickaxeManager().getEnchantBigInteger(enchant, "extra-reward", BigInteger.ZERO).max(BigInteger.ZERO);
 
@@ -300,14 +371,6 @@ public final class PickaxeEnchantListener implements Listener {
 
         if (rewardMultiplier != 1.0) {
             amount = multiplyBigInteger(amount, rewardMultiplier);
-        }
-
-        int luckyLevel = profile.getEnchantLevel(PickaxeEnchant.LUCKY);
-        double luckyRewardBoost = plugin.getPickaxeManager().getEnchantDouble(PickaxeEnchant.LUCKY, "reward-boost-percent-per-level", 0.0);
-
-        if (luckyLevel > 0 && luckyRewardBoost > 0.0) {
-            double luckyMultiplier = 1.0 + ((luckyLevel * luckyRewardBoost) / 100.0);
-            amount = multiplyBigInteger(amount, luckyMultiplier);
         }
 
         return amount.max(BigInteger.ONE);
@@ -363,17 +426,11 @@ public final class PickaxeEnchantListener implements Listener {
 
     private boolean rollChance(PickaxeEnchant enchant, PlayerProfile profile) {
         int level = profile.getEnchantLevel(enchant);
-
         double baseChance = plugin.getPickaxeManager().getEnchantDouble(enchant, "base-chance", 0.0);
         double chancePerLevel = plugin.getPickaxeManager().getEnchantDouble(enchant, "chance-per-level", 0.0);
         double maxChance = plugin.getPickaxeManager().getEnchantDouble(enchant, "max-chance", 100.0);
-
-        int luckyLevel = profile.getEnchantLevel(PickaxeEnchant.LUCKY);
-        double luckyChanceBoost = plugin.getPickaxeManager().getEnchantDouble(PickaxeEnchant.LUCKY, "chance-boost-per-level", 0.0);
-
-        double chance = baseChance + (level * chancePerLevel) + (luckyLevel * luckyChanceBoost);
+        double chance = baseChance + (level * chancePerLevel);
         chance = Math.max(0.0, Math.min(maxChance, chance));
-
         return ThreadLocalRandom.current().nextDouble(100.0) < chance;
     }
 
@@ -384,6 +441,10 @@ public final class PickaxeEnchantListener implements Listener {
 
         if (rewards.gems.compareTo(BigInteger.ZERO) > 0) {
             profile.addGems(rewards.gems);
+        }
+
+        if (rewards.beacons.compareTo(BigInteger.ZERO) > 0) {
+            profile.addBeacons(rewards.beacons);
         }
 
         if (rewards.keys > 0) {
@@ -405,6 +466,18 @@ public final class PickaxeEnchantListener implements Listener {
 
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsed);
         }
+    }
+
+    private void sendProcMessage(Player player, PickaxeEnchant enchant, int blocks) {
+        if (!plugin.getPickaxeManager().isProcMessagesEnabled(enchant)) {
+            return;
+        }
+
+        String message = plugin.getPickaxeManager().getProcMessage(enchant)
+                .replace("%enchant%", enchant.getDisplayName())
+                .replace("%blocks%", format(BigInteger.valueOf(Math.max(0, blocks))));
+
+        MessageUtil.sendWithPrefix(player, message);
     }
 
     private boolean isValidMineBlock(Player player, Block block) {
@@ -479,10 +552,14 @@ public final class PickaxeEnchantListener implements Listener {
     private static final class RewardResult {
         private BigInteger tokens = BigInteger.ZERO;
         private BigInteger gems = BigInteger.ZERO;
+        private BigInteger beacons = BigInteger.ZERO;
         private int keys = 0;
 
         private boolean hasAnyReward() {
-            return tokens.compareTo(BigInteger.ZERO) > 0 || gems.compareTo(BigInteger.ZERO) > 0 || keys > 0;
+            return tokens.compareTo(BigInteger.ZERO) > 0
+                    || gems.compareTo(BigInteger.ZERO) > 0
+                    || beacons.compareTo(BigInteger.ZERO) > 0
+                    || keys > 0;
         }
     }
 }
