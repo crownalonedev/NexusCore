@@ -38,7 +38,8 @@ public class PickaxeManager {
             10, 11, 12, 13, 14, 15, 16,
             19, 20, 21, 22, 23, 24, 25,
             28, 29, 30, 31, 32, 33, 34,
-            37, 38, 39, 40, 41, 42, 43
+            37, 38, 39, 40, 41, 42, 43,
+            46, 47, 48, 50, 51, 52, 53
     };
 
     private final NexusCore plugin;
@@ -96,7 +97,6 @@ public class PickaxeManager {
 
     public void startTasks() {
         shutdown();
-
         passiveTaskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 PlayerProfile profile = plugin.getProfileManager().getProfile(player);
@@ -189,7 +189,7 @@ public class PickaxeManager {
     }
 
     public int getMaxPickaxeLevel() {
-        return Math.max(1, plugin.getConfig().getInt("pickaxe.leveling.max-level", 500));
+        return Math.max(1, plugin.getConfig().getInt("pickaxe.leveling.max-level", 650));
     }
 
     public boolean hasPickaxe(Player player) {
@@ -208,7 +208,6 @@ public class PickaxeManager {
 
         int slot = profile.getPickaxeSlot();
         PlayerInventory inventory = player.getInventory();
-
         removeAllPickaxes(player);
 
         ItemStack current = inventory.getItem(slot);
@@ -247,8 +246,7 @@ public class PickaxeManager {
             return item;
         }
 
-        String name = replacePickaxePlaceholders(plugin.getConfig().getString("pickaxe.name", "<aqua><bold>Nexus Pickaxe</bold>"), player, profile);
-        meta.displayName(color(name));
+        meta.displayName(color(replacePickaxePlaceholders(plugin.getConfig().getString("pickaxe.name", "<aqua><bold>Nexus Pickaxe</bold>"), player, profile)));
 
         List<Component> lore = new ArrayList<>();
         for (String line : plugin.getConfig().getStringList("pickaxe.lore")) {
@@ -271,7 +269,6 @@ public class PickaxeManager {
         meta.setUnbreakable(true);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(pickaxeKey, PersistentDataType.STRING, "true");
-
         meta.addEnchant(Enchantment.EFFICIENCY, getMaxLevel(PickaxeEnchant.EFFICIENCY), true);
 
         for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
@@ -284,7 +281,6 @@ public class PickaxeManager {
 
     private List<String> buildDynamicEnchantLore(PlayerProfile profile) {
         List<String> lore = new ArrayList<>();
-
         for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
             if (enchant == PickaxeEnchant.EFFICIENCY) {
                 lore.add("  <gray>Efficiency: <aqua>MAX</aqua>");
@@ -298,7 +294,6 @@ public class PickaxeManager {
 
             lore.add("  <gray>" + enchant.getDisplayName() + ": <aqua>" + level + "</aqua>");
         }
-
         return lore;
     }
 
@@ -306,7 +301,6 @@ public class PickaxeManager {
         if (profile == null) {
             return;
         }
-
         int max = getMaxLevel(PickaxeEnchant.EFFICIENCY);
         if (profile.getEnchantLevel(PickaxeEnchant.EFFICIENCY) < max) {
             profile.setEnchantLevel(PickaxeEnchant.EFFICIENCY, max);
@@ -321,7 +315,6 @@ public class PickaxeManager {
         if (isAir(item) || !item.hasItemMeta()) {
             return false;
         }
-
         ItemMeta meta = item.getItemMeta();
         return meta != null && meta.getPersistentDataContainer().has(pickaxeKey, PersistentDataType.STRING);
     }
@@ -351,7 +344,6 @@ public class PickaxeManager {
             if (index >= ENCHANT_SLOTS.length) {
                 break;
             }
-
             inventory.setItem(ENCHANT_SLOTS[index], createEnchantItem(player, enchant));
             index++;
         }
@@ -374,14 +366,12 @@ public class PickaxeManager {
         fillMenu(inventory, "upgrade-menu.filler");
 
         inventory.setItem(13, createEnchantItem(player, enchant));
-
         setUpgradeButton(inventory, 20, player, profile, enchant, 1, "<#00CFFF><bold>+1 Level</bold>");
         setUpgradeButton(inventory, 21, player, profile, enchant, 5, "<#00CFFF><bold>+5 Levels</bold>");
         setUpgradeButton(inventory, 22, player, profile, enchant, 25, "<#00CFFF><bold>+25 Levels</bold>");
         setUpgradeButton(inventory, 23, player, profile, enchant, 50, "<#0066FF><bold>+50 Levels</bold>");
         setUpgradeButton(inventory, 24, player, profile, enchant, 100, "<#0066FF><bold>+100 Levels</bold>");
         setUpgradeButton(inventory, 31, player, profile, enchant, -1, "<gradient:#FCFC54:#FCA800><bold>MAX UPGRADE</bold></gradient>");
-
         inventory.setItem(40, createActionItem(Material.ARROW, "<yellow><bold>Back</bold>", List.of("", "<gray>Return to the enchant list."), "back_enchants"));
 
         player.openInventory(inventory);
@@ -408,13 +398,11 @@ public class PickaxeManager {
             meta.getPersistentDataContainer().set(upgradeAmountKey, PersistentDataType.INTEGER, realAmount);
             item.setItemMeta(meta);
         }
-
         inventory.setItem(slot, item);
     }
 
     public void openSlotMenu(Player player) {
-        String title = getSlotMenuTitle();
-        Inventory inventory = Bukkit.createInventory(null, Math.max(1, Math.min(6, menuConfig.getInt("slot-menu.rows", 3))) * 9, title);
+        Inventory inventory = Bukkit.createInventory(null, Math.max(1, Math.min(6, menuConfig.getInt("slot-menu.rows", 3))) * 9, getSlotMenuTitle());
         fillMenu(inventory, "slot-menu.filler");
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
@@ -426,14 +414,10 @@ public class PickaxeManager {
             Material material = current
                     ? getMaterial(menuConfig.getString("slot-menu.slots.current-material", "LIME_STAINED_GLASS_PANE"), Material.LIME_STAINED_GLASS_PANE)
                     : getMaterial(menuConfig.getString("slot-menu.slots.available-material", "LIGHT_BLUE_STAINED_GLASS_PANE"), Material.LIGHT_BLUE_STAINED_GLASS_PANE);
-
             String name = current
                     ? menuConfig.getString("slot-menu.slots.current-name", "<green><bold>Slot %slot%</bold></green>")
                     : menuConfig.getString("slot-menu.slots.available-name", "<aqua><bold>Slot %slot%</bold></aqua>");
-
-            List<String> lore = current
-                    ? menuConfig.getStringList("slot-menu.slots.current-lore")
-                    : menuConfig.getStringList("slot-menu.slots.available-lore");
+            List<String> lore = current ? menuConfig.getStringList("slot-menu.slots.current-lore") : menuConfig.getStringList("slot-menu.slots.available-lore");
 
             ItemStack item = createActionItem(material, name.replace("%slot%", String.valueOf(hotbarSlot + 1)), replaceSlotLore(lore, hotbarSlot), "pickaxe_slot");
             ItemMeta meta = item.getItemMeta();
@@ -455,7 +439,6 @@ public class PickaxeManager {
         }
 
         event.setCancelled(true);
-
         if (event.getClickedInventory() == null || !event.getClickedInventory().equals(event.getView().getTopInventory())) {
             return true;
         }
@@ -466,12 +449,10 @@ public class PickaxeManager {
         }
 
         String action = getMenuAction(clicked);
-
         if ("slot_selector".equalsIgnoreCase(action)) {
             openSlotMenu(player);
             return true;
         }
-
         if ("pickaxe_slot".equalsIgnoreCase(action)) {
             Integer slot = getMenuSlot(clicked);
             if (slot != null) {
@@ -480,7 +461,6 @@ public class PickaxeManager {
             }
             return true;
         }
-
         if ("open_upgrade".equalsIgnoreCase(action)) {
             PickaxeEnchant enchant = getMenuEnchant(clicked);
             if (enchant != null) {
@@ -493,7 +473,6 @@ public class PickaxeManager {
             }
             return true;
         }
-
         if ("buy_upgrade".equalsIgnoreCase(action)) {
             PickaxeEnchant enchant = getMenuEnchant(clicked);
             Integer amount = getUpgradeAmount(clicked);
@@ -503,23 +482,19 @@ public class PickaxeManager {
             }
             return true;
         }
-
         if ("back_enchants".equalsIgnoreCase(action)) {
             openEnchantMenu(player);
             return true;
         }
-
         return true;
     }
 
     public void upgradeEnchant(Player player, PickaxeEnchant enchant, int amount) {
         PlayerProfile profile = plugin.getProfileManager().getProfile(player);
-
         if (!isEnchantEnabled(enchant)) {
             send(player, "<red>That enchant is currently disabled.");
             return;
         }
-
         if (!isUnlocked(player, enchant)) {
             send(player, "<red>You need Pickaxe Level <white>" + getUnlockLevel(enchant) + "</white><red> to unlock " + enchant.getDisplayName() + ".");
             return;
@@ -527,12 +502,10 @@ public class PickaxeManager {
 
         int currentLevel = profile.getEnchantLevel(enchant);
         int maxLevel = getMaxLevel(enchant);
-
         if (currentLevel >= maxLevel) {
             send(player, "<red>That enchant is already maxed.");
             return;
         }
-
         if (amount <= 0) {
             send(player, "<red>You cannot afford that upgrade.");
             return;
@@ -540,18 +513,15 @@ public class PickaxeManager {
 
         int upgraded = 0;
         BigInteger totalCost = BigInteger.ZERO;
-
         while (upgraded < amount) {
             currentLevel = profile.getEnchantLevel(enchant);
             if (currentLevel >= maxLevel) {
                 break;
             }
-
             BigInteger cost = getUpgradeTokenCost(enchant, currentLevel);
             if (profile.getTokens().compareTo(cost) < 0) {
                 break;
             }
-
             profile.removeTokens(cost);
             profile.addEnchantLevel(enchant, 1);
             totalCost = totalCost.add(cost);
@@ -566,7 +536,6 @@ public class PickaxeManager {
 
         plugin.getProfileManager().saveProfile(profile);
         syncPickaxe(player);
-
         send(player, "<gradient:#00CFFF:#0066FF><bold>ENCHANT UPGRADED!</bold></gradient> <gray>" + enchant.getDisplayName() + " <dark_gray>»</dark_gray> <aqua>+" + upgraded + "</aqua> <gray>level(s)");
         send(player, "<gray>Cost: <yellow>" + format(totalCost) + "</yellow><gray> tokens.");
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.4F);
@@ -601,7 +570,6 @@ public class PickaxeManager {
         if (value == null || value.isBlank()) {
             return fallback;
         }
-
         try {
             return new BigInteger(value.replace(",", "").replace("_", "").trim()).max(BigInteger.ZERO);
         } catch (NumberFormatException exception) {
@@ -624,7 +592,7 @@ public class PickaxeManager {
     }
 
     public int getMaxLevel(PickaxeEnchant enchant) {
-        return getEnchantInt(enchant, "max-level", enchant == PickaxeEnchant.EFFICIENCY ? 255 : 100);
+        return getEnchantInt(enchant, "max-level", enchant == PickaxeEnchant.EFFICIENCY ? 255 : 500);
     }
 
     public int getUnlockLevel(PickaxeEnchant enchant) {
@@ -649,7 +617,6 @@ public class PickaxeManager {
         if (amount <= 0) {
             return BigInteger.ZERO;
         }
-
         BigInteger total = BigInteger.ZERO;
         int max = getMaxLevel(enchant);
         for (int i = 0; i < amount && currentLevel + i < max; i++) {
@@ -664,7 +631,6 @@ public class PickaxeManager {
         int maxLevel = getMaxLevel(enchant);
         BigInteger nextCost = getUpgradeTokenCost(enchant, level);
         boolean unlocked = isUnlocked(player, enchant);
-
         Material material = getMaterial(getEnchantString(enchant, "material", defaultMaterial(enchant).name()), defaultMaterial(enchant));
         String name = unlocked
                 ? getEnchantString(enchant, "menu-name", "<gradient:#00CFFF:#0066FF><bold>" + enchant.getDisplayName() + "</bold></gradient>")
@@ -707,11 +673,9 @@ public class PickaxeManager {
                 .replace("%pickaxe_level%", String.valueOf(profile.getPickaxeLevel()))
                 .replace("%pickaxe_xp%", String.valueOf(profile.getPickaxeXp()))
                 .replace("%pickaxe_xp_required%", String.valueOf(getXpRequiredForNextPickaxeLevel(profile.getPickaxeLevel())));
-
         for (PickaxeEnchant enchant : PickaxeEnchant.values()) {
             replaced = replaced.replace("%" + enchant.getId() + "%", String.valueOf(profile.getEnchantLevel(enchant)));
         }
-
         return replaced.replace("%fortune%", "0");
     }
 
@@ -807,7 +771,6 @@ public class PickaxeManager {
         int level = profile.getEnchantLevel(enchant);
         int maxLevel = getMaxLevel(enchant);
         BigInteger tokens = profile.getTokens();
-
         while (level < maxLevel) {
             BigInteger cost = getUpgradeTokenCost(enchant, level);
             if (tokens.compareTo(cost) < 0) {
@@ -945,10 +908,9 @@ public class PickaxeManager {
         config.set("description", defaultDescription(enchant));
         config.set("proc-message.enabled", true);
         config.set("proc-message.text", "<gradient:#00CFFF:#0066FF><bold>" + enchant.getDisplayName() + "</bold></gradient> <dark_gray>»</dark_gray> <gray>Activated on <aqua>%blocks%</aqua><gray> block(s)!");
-
         config.set("max-level", enchant == PickaxeEnchant.EFFICIENCY ? 255 : 500);
-        config.set("base-token-cost", "1000");
-        config.set("token-cost-increase", "500");
+        config.set("base-token-cost", "100000");
+        config.set("token-cost-increase", "10000");
         config.set("base-chance", 0.0);
         config.set("chance-per-level", 0.02);
         config.set("max-chance", 35.0);
@@ -983,20 +945,22 @@ public class PickaxeManager {
                 config.set("reward-per-level", "8");
             }
             case JACKHAMMER -> {
-                config.set("max-level", 500);
                 config.set("chance-per-level", 0.04);
                 config.set("max-chance", 25.0);
+                config.set("layer-radius", 64);
+                config.set("max-extra-blocks", 5000);
             }
-            case GEM_FINDER, BEACON_FINDER -> {
-                config.set("max-level", 500);
+            case GEM_FINDER, BEACON_FINDER, GANG_POINT_FINDER -> {
                 config.set("base-token-cost", "250000");
                 config.set("token-cost-increase", "15000");
                 config.set("base-chance", 2.0);
                 config.set("chance-per-level", 0.03);
                 config.set("max-chance", 40.0);
+                if (enchant == PickaxeEnchant.GANG_POINT_FINDER) {
+                    config.set("commands", List.of("gang points give %player% %amount%"));
+                }
             }
             case KEY_FINDER -> {
-                config.set("max-level", 500);
                 config.set("base-token-cost", "500000");
                 config.set("token-cost-increase", "25000");
                 config.set("base-chance", 0.0);
@@ -1004,10 +968,21 @@ public class PickaxeManager {
                 config.set("max-chance", 10.0);
                 config.set("commands", List.of("crate key give %player% mine %amount%"));
             }
+            case DOUBLE_STRIKE -> {
+                config.set("base-chance", 0.0);
+                config.set("chance-per-level", 0.015);
+                config.set("max-chance", 20.0);
+            }
+            case HYDROGEN_BOMB, BLACK_HOLE, DRAGONS_WRATH, VOLCANO, PROPHET -> {
+                config.set("base-token-cost", "500000");
+                config.set("token-cost-increase", "35000");
+                config.set("chance-per-level", 0.018);
+                config.set("max-chance", 28.0);
+                config.set("min-reward", "500");
+                config.set("max-reward", "1500");
+                config.set("reward-per-level", "15");
+            }
             default -> {
-                config.set("max-level", 500);
-                config.set("base-token-cost", "100000");
-                config.set("token-cost-increase", "10000");
             }
         }
     }
@@ -1036,6 +1011,17 @@ public class PickaxeManager {
             case SHOCKWAVE -> Material.PRISMARINE_SHARD;
             case CLUSTER_BOMB -> Material.SLIME_BALL;
             case TOKEN_GREED -> Material.GOLD_BLOCK;
+            case WILD_BLAZE -> Material.BLAZE_POWDER;
+            case DOUBLE_STRIKE -> Material.REDSTONE;
+            case GANG_POINT_FINDER -> Material.LIME_DYE;
+            case SNOW_ARMY -> Material.SNOWBALL;
+            case DRAGONS_WRATH -> Material.DRAGON_BREATH;
+            case SCAVENGER -> Material.GOLDEN_SHOVEL;
+            case ENDERMAN_ABOMINATION -> Material.ENDER_PEARL;
+            case VOLCANO -> Material.LAVA_BUCKET;
+            case HYDROGEN_BOMB -> Material.TNT;
+            case PROPHET -> Material.TOTEM_OF_UNDYING;
+            case BLACK_HOLE -> Material.ENDER_EYE;
         };
     }
 
@@ -1063,6 +1049,17 @@ public class PickaxeManager {
             case SHOCKWAVE -> "<gray>Releases expanding shockwave rings.";
             case CLUSTER_BOMB -> "<gray>Summons slime bombs that explode your mine.";
             case TOKEN_GREED -> "<gray>Gives a large amount of Tokens when activated.";
+            case WILD_BLAZE -> "<gray>Summons a wild blaze that rewards Tokens and Gems per block broken.";
+            case DOUBLE_STRIKE -> "<gray>Has a chance to proc your enchants a second time.";
+            case GANG_POINT_FINDER -> "<gray>Has a chance to find gang points.";
+            case SNOW_ARMY -> "<gray>Summons a snowman squad that destroys layers of your mine, rewarding Tokens and Gems.";
+            case DRAGONS_WRATH -> "<gray>Summons the Ender Dragon to rain destruction, granting Tokens and Gems.";
+            case SCAVENGER -> "<gray>Has a chance to dig up lots of Tokens and Gems.";
+            case ENDERMAN_ABOMINATION -> "<gray>Summons Endermen which steal blocks, rewarding Tokens and Gems.";
+            case VOLCANO -> "<gray>Erupts explosions onto the mine, rewarding Tokens and Gems.";
+            case HYDROGEN_BOMB -> "<gray>Nuke's big brother, destroying your mine and granting Tokens, Gems, and Rank XP.";
+            case PROPHET -> "<gray>Summons the prophet and rains TNT down onto your mine.";
+            case BLACK_HOLE -> "<gray>Sucks blocks out of your mine and into space, rewarding Tokens and Gems.";
         };
     }
 
@@ -1070,7 +1067,6 @@ public class PickaxeManager {
         if (menuFile.exists()) {
             return;
         }
-
         YamlConfiguration config = new YamlConfiguration();
         config.set("enchants-menu.title", "Nexus Pickaxe Enchants");
         config.set("enchants-menu.rows", 6);
@@ -1112,7 +1108,6 @@ public class PickaxeManager {
         config.set("slot-menu.slots.available-name", "<aqua><bold>Slot %slot%</bold></aqua>");
         config.set("slot-menu.slots.current-lore", List.of("", "<green>Your pickaxe is currently here."));
         config.set("slot-menu.slots.available-lore", List.of("", "<gray>Click to move your pickaxe here."));
-
         try {
             config.save(menuFile);
         } catch (IOException exception) {
