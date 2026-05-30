@@ -55,7 +55,11 @@ public enum PickaxeEnchant {
     HEROS_ASSISTANCE("heros_assistance", "Heros Assistance", 450),
     SNOWSTORM("snowstorm", "Snowstorm", 500),
     INVASION("invasion", "Invasion", 550),
-    BLESSED("blessed", "Blessed", 600);
+    BLESSED("blessed", "Blessed", 600),
+    WORSHIP("worship", "Worship", 700),
+    THUNDERBIRD("thunderbird", "Thunderbird", 750),
+    SWARM("swarm", "Swarm", 825),
+    SUPERNOVA("supernova", "Supernova", 900);
 
     private final String id;
     private final String displayName;
