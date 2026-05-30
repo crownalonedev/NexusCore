@@ -40,9 +40,10 @@ public final class SettingsMenu {
         int closeSlot = gui.getInt("items.close.slot", 22);
         int autoRebirthSlot = gui.getInt("items.auto-rebirth.slot", 11);
         int autoAscensionSlot = gui.getInt("items.auto-ascension.slot", 15);
+        int hideMaxEnchantsSlot = gui.getInt("items.hide-max-enchants.slot", 13);
 
         Inventory inventory = Bukkit.createInventory(
-                new Holder(player.getUniqueId(), closeSlot, autoRebirthSlot, autoAscensionSlot),
+                new Holder(player.getUniqueId(), closeSlot, autoRebirthSlot, autoAscensionSlot, hideMaxEnchantsSlot),
                 size,
                 MessageUtil.color(title)
         );
@@ -117,19 +118,21 @@ public final class SettingsMenu {
 
     private Material getItemMaterial(String key, ConfigurationSection section, PlayerProfile profile) {
         if (key.equalsIgnoreCase("auto-rebirth")) {
-            if (profile.isAutoRebirth()) {
-                return getMaterial(section.getString("enabled-material", "LIME_DYE"), Material.LIME_DYE);
-            }
-
-            return getMaterial(section.getString("disabled-material", "GRAY_DYE"), Material.GRAY_DYE);
+            return profile.isAutoRebirth()
+                    ? getMaterial(section.getString("enabled-material", "LIME_DYE"), Material.LIME_DYE)
+                    : getMaterial(section.getString("disabled-material", "GRAY_DYE"), Material.GRAY_DYE);
         }
 
         if (key.equalsIgnoreCase("auto-ascension")) {
-            if (profile.isAutoAscension()) {
-                return getMaterial(section.getString("enabled-material", "LIME_DYE"), Material.LIME_DYE);
-            }
+            return profile.isAutoAscension()
+                    ? getMaterial(section.getString("enabled-material", "LIME_DYE"), Material.LIME_DYE)
+                    : getMaterial(section.getString("disabled-material", "GRAY_DYE"), Material.GRAY_DYE);
+        }
 
-            return getMaterial(section.getString("disabled-material", "GRAY_DYE"), Material.GRAY_DYE);
+        if (key.equalsIgnoreCase("hide-max-enchants")) {
+            return profile.isHideMaxEnchants()
+                    ? getMaterial(section.getString("enabled-material", "LIME_DYE"), Material.LIME_DYE)
+                    : getMaterial(section.getString("disabled-material", "GRAY_DYE"), Material.GRAY_DYE);
         }
 
         return getMaterial(section.getString("material", "STONE"), Material.STONE);
@@ -146,6 +149,8 @@ public final class SettingsMenu {
                 .replace("%auto_rebirth_plain%", profile.isAutoRebirth() ? "Enabled" : "Disabled")
                 .replace("%auto_ascension%", formatBoolean(profile.isAutoAscension()))
                 .replace("%auto_ascension_plain%", profile.isAutoAscension() ? "Enabled" : "Disabled")
+                .replace("%hide_max_enchants%", formatBoolean(profile.isHideMaxEnchants()))
+                .replace("%hide_max_enchants_plain%", profile.isHideMaxEnchants() ? "Enabled" : "Disabled")
                 .replace("%rank%", String.valueOf(profile.getRank()))
                 .replace("%rebirth%", String.valueOf(profile.getRebirth()))
                 .replace("%ascension%", String.valueOf(profile.getAscension()));
@@ -193,12 +198,14 @@ public final class SettingsMenu {
         private final int closeSlot;
         private final int autoRebirthSlot;
         private final int autoAscensionSlot;
+        private final int hideMaxEnchantsSlot;
 
-        public Holder(UUID playerUuid, int closeSlot, int autoRebirthSlot, int autoAscensionSlot) {
+        public Holder(UUID playerUuid, int closeSlot, int autoRebirthSlot, int autoAscensionSlot, int hideMaxEnchantsSlot) {
             this.playerUuid = playerUuid;
             this.closeSlot = closeSlot;
             this.autoRebirthSlot = autoRebirthSlot;
             this.autoAscensionSlot = autoAscensionSlot;
+            this.hideMaxEnchantsSlot = hideMaxEnchantsSlot;
         }
 
         public UUID getPlayerUuid() {
@@ -215,6 +222,10 @@ public final class SettingsMenu {
 
         public int getAutoAscensionSlot() {
             return autoAscensionSlot;
+        }
+
+        public int getHideMaxEnchantsSlot() {
+            return hideMaxEnchantsSlot;
         }
 
         @Override
