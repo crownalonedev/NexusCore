@@ -9,13 +9,29 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Enderman;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.FallingBlock;
+import org.bukkit.entity.Fireball;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowball;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.util.Vector;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -26,11 +42,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntSupplier;
 
 public final class PickaxeEnchantListener implements Listener {
 
     private final NexusCore plugin;
     private final Map<UUID, EarningsWindow> earningsWindows = new HashMap<>();
+    private final Map<UUID, Integer> resetCheckCounters = new HashMap<>();
 
     public PickaxeEnchantListener(NexusCore plugin) {
         this.plugin = plugin;
@@ -85,6 +103,7 @@ public final class PickaxeEnchantListener implements Listener {
         if (shouldProc(PickaxeEnchant.DOUBLE_STRIKE, profile)) {
             RewardResult secondRewards = rollRewards(player, profile, affectedBlocks);
             rewards.add(secondRewards);
+            playVisual(PickaxeEnchant.DOUBLE_STRIKE, player, block);
             sendProcMessage(player, PickaxeEnchant.DOUBLE_STRIKE, affectedBlocks);
         }
 
@@ -99,108 +118,218 @@ public final class PickaxeEnchantListener implements Listener {
 
     private int processDestructiveEnchant(Player player, Block block, PlayerProfile profile) {
         if (shouldProc(PickaxeEnchant.HYDROGEN_BOMB, profile)) {
-            int broken = breakCube(player, block, 22, 6000);
-            sendProcMessage(player, PickaxeEnchant.HYDROGEN_BOMB, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.HYDROGEN_BOMB, () -> breakCube(player, block, 22, 6000));
         }
 
         if (shouldProc(PickaxeEnchant.BLACK_HOLE, profile)) {
-            int broken = breakSphere(player, block, 14, 4500);
-            sendProcMessage(player, PickaxeEnchant.BLACK_HOLE, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.BLACK_HOLE, () -> breakSphere(player, block, 14, 4500));
         }
 
         if (shouldProc(PickaxeEnchant.DRAGONS_WRATH, profile)) {
-            int broken = breakColumns(player, block, 14, 2400);
-            sendProcMessage(player, PickaxeEnchant.DRAGONS_WRATH, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.DRAGONS_WRATH, () -> breakColumns(player, block, 14, 2400));
         }
 
         if (shouldProc(PickaxeEnchant.PROPHET, profile)) {
-            int broken = breakColumns(player, block, 16, 3000);
-            sendProcMessage(player, PickaxeEnchant.PROPHET, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.PROPHET, () -> breakColumns(player, block, 16, 3000));
         }
 
         if (shouldProc(PickaxeEnchant.VOLCANO, profile)) {
-            int broken = breakCube(player, block, 9, 2200);
-            sendProcMessage(player, PickaxeEnchant.VOLCANO, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.VOLCANO, () -> breakCube(player, block, 9, 2200));
         }
 
         if (shouldProc(PickaxeEnchant.NUKE, profile)) {
-            int broken = breakCube(player, block, 16, 2500);
-            sendProcMessage(player, PickaxeEnchant.NUKE, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.NUKE, () -> breakCube(player, block, 16, 2500));
         }
 
         if (shouldProc(PickaxeEnchant.SNOW_ARMY, profile)) {
-            int broken = breakLayer(player, block, 46, 3200);
-            sendProcMessage(player, PickaxeEnchant.SNOW_ARMY, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.SNOW_ARMY, () -> breakLayer(player, block, 46, 3200));
         }
 
         if (shouldProc(PickaxeEnchant.ENDERMAN_ABOMINATION, profile)) {
-            int broken = breakRandomAround(player, block, 12, 1400);
-            sendProcMessage(player, PickaxeEnchant.ENDERMAN_ABOMINATION, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.ENDERMAN_ABOMINATION, () -> breakRandomAround(player, block, 12, 1400));
         }
 
         if (shouldProc(PickaxeEnchant.WILD_BLAZE, profile)) {
-            int broken = breakColumns(player, block, 10, 1200);
-            sendProcMessage(player, PickaxeEnchant.WILD_BLAZE, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.WILD_BLAZE, () -> breakColumns(player, block, 10, 1200));
         }
 
         if (shouldProc(PickaxeEnchant.JACKHAMMER, profile)) {
-            int broken = breakMineLayer(player, block);
-            sendProcMessage(player, PickaxeEnchant.JACKHAMMER, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.JACKHAMMER, () -> breakMineLayer(player, block));
         }
 
         if (shouldProc(PickaxeEnchant.METEOR_STRIKE, profile)) {
-            int broken = breakCube(player, block, 7, 1000);
-            sendProcMessage(player, PickaxeEnchant.METEOR_STRIKE, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.METEOR_STRIKE, () -> breakCube(player, block, 7, 1000));
         }
 
         if (shouldProc(PickaxeEnchant.METEOR, profile)) {
-            int broken = breakCube(player, block, 4, 450);
-            sendProcMessage(player, PickaxeEnchant.METEOR, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.METEOR, () -> breakCube(player, block, 4, 450));
         }
 
         if (shouldProc(PickaxeEnchant.MINE_STRIKE, profile)) {
-            int broken = breakCube(player, block, 3, 320);
-            sendProcMessage(player, PickaxeEnchant.MINE_STRIKE, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.MINE_STRIKE, () -> breakCube(player, block, 3, 320));
         }
 
         if (shouldProc(PickaxeEnchant.SHOCKWAVE, profile)) {
-            int broken = breakRing(player, block, 7, 600);
-            sendProcMessage(player, PickaxeEnchant.SHOCKWAVE, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.SHOCKWAVE, () -> breakRing(player, block, 7, 600));
         }
 
         if (shouldProc(PickaxeEnchant.CLUSTER_BOMB, profile)) {
-            int broken = breakCube(player, block, 5, 650);
-            sendProcMessage(player, PickaxeEnchant.CLUSTER_BOMB, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.CLUSTER_BOMB, () -> breakCube(player, block, 5, 650));
         }
 
         if (shouldProc(PickaxeEnchant.HOLY_ARROWS, profile)) {
-            int broken = breakColumns(player, block, 8, 500);
-            sendProcMessage(player, PickaxeEnchant.HOLY_ARROWS, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.HOLY_ARROWS, () -> breakColumns(player, block, 8, 500));
         }
 
         if (shouldProc(PickaxeEnchant.VEIN_MINER, profile)) {
-            int broken = breakVein(player, block, 5, 220);
-            sendProcMessage(player, PickaxeEnchant.VEIN_MINER, broken);
-            return broken;
+            return proc(player, block, PickaxeEnchant.VEIN_MINER, () -> breakVein(player, block, 5, 220));
         }
 
         return 0;
+    }
+
+    private int proc(Player player, Block block, PickaxeEnchant enchant, IntSupplier breaker) {
+        playVisual(enchant, player, block);
+        int broken = breaker.getAsInt();
+        sendProcMessage(player, enchant, broken);
+        return broken;
+    }
+
+    private void playVisual(PickaxeEnchant enchant, Player player, Block origin) {
+        if (!plugin.getConfig().getBoolean("pickaxe.enchant-processing.visuals.enabled", true)) {
+            return;
+        }
+
+        World world = origin.getWorld();
+        Location center = origin.getLocation().add(0.5, 0.5, 0.5);
+
+        switch (enchant) {
+            case NUKE, HYDROGEN_BOMB, DYNAMITE -> {
+                spawnFallingBlock(world, center.clone().add(0, 18, 0), Material.TNT, new Vector(0, -0.9, 0), 35);
+                safeTntFlash(world, center.clone().add(0, 3, 0));
+                world.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.65f);
+                world.spawnParticle(Particle.EXPLOSION, center, 10, 6, 3, 6, 0.02);
+            }
+            case HOLY_ARROWS -> {
+                for (int i = 0; i < 10; i++) {
+                    Location spawn = center.clone().add(ThreadLocalRandom.current().nextDouble(-8, 8), 15, ThreadLocalRandom.current().nextDouble(-8, 8));
+                    Arrow arrow = world.spawn(spawn, Arrow.class);
+                    arrow.setShooter(player);
+                    arrow.setDamage(0.0);
+                    arrow.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
+                    arrow.setVelocity(new Vector(0, -1.7, 0));
+                    Bukkit.getScheduler().runTaskLater(plugin, arrow::remove, 35L);
+                }
+                world.playSound(center, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.35f);
+            }
+            case CLUSTER_BOMB, TOKEN_EXPLOSION -> {
+                for (int i = 0; i < 5; i++) {
+                    spawnFallingBlock(world, center.clone().add(ThreadLocalRandom.current().nextDouble(-5, 5), 12, ThreadLocalRandom.current().nextDouble(-5, 5)), Material.TNT, new Vector(0, -0.6, 0), 30);
+                }
+                world.spawnParticle(Particle.FLAME, center, 80, 5, 3, 5, 0.05);
+                world.playSound(center, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 0.8f);
+            }
+            case METEOR, METEOR_STRIKE, METEORITE -> {
+                spawnFallingBlock(world, center.clone().add(0, 20, 0), Material.MAGMA_BLOCK, new Vector(0, -1.15, 0), 40);
+                world.spawnParticle(Particle.LAVA, center.clone().add(0, 1, 0), 45, 4, 2, 4, 0.01);
+                world.playSound(center, Sound.ENTITY_BLAZE_SHOOT, 1.0f, 0.7f);
+            }
+            case WILD_BLAZE, VOLCANO, FIRECRACKER, FIRECRACKS -> {
+                for (int i = 0; i < 6; i++) {
+                    Fireball fireball = world.spawn(center.clone().add(0, 4, 0), Fireball.class);
+                    fireball.setShooter(player);
+                    fireball.setYield(0F);
+                    fireball.setIsIncendiary(false);
+                    fireball.setDirection(new Vector(ThreadLocalRandom.current().nextDouble(-0.7, 0.7), -1.0, ThreadLocalRandom.current().nextDouble(-0.7, 0.7)));
+                    Bukkit.getScheduler().runTaskLater(plugin, fireball::remove, 24L);
+                }
+                world.spawnParticle(Particle.FLAME, center, 90, 5, 3, 5, 0.07);
+            }
+            case ENDERMAN_ABOMINATION -> {
+                for (int i = 0; i < 5; i++) {
+                    Location spawn = center.clone().add(ThreadLocalRandom.current().nextDouble(-6, 6), 1, ThreadLocalRandom.current().nextDouble(-6, 6));
+                    Enderman enderman = world.spawn(spawn, Enderman.class);
+                    prepareVisualMob(enderman);
+                    Bukkit.getScheduler().runTaskLater(plugin, enderman::remove, 35L);
+                }
+                world.spawnParticle(Particle.PORTAL, center, 140, 8, 3, 8, 0.1);
+                world.playSound(center, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.8f);
+            }
+            case SNOW_ARMY, SNOWSTORM, ARCTIC_DESTROYER -> {
+                for (int i = 0; i < 6; i++) {
+                    Entity snowman = world.spawnEntity(center.clone().add(ThreadLocalRandom.current().nextDouble(-6, 6), 1, ThreadLocalRandom.current().nextDouble(-6, 6)), EntityType.SNOW_GOLEM);
+                    if (snowman instanceof LivingEntity living) {
+                        prepareVisualMob(living);
+                    }
+                    Bukkit.getScheduler().runTaskLater(plugin, snowman::remove, 35L);
+                    Snowball snowball = world.spawn(center.clone().add(0, 8, 0), Snowball.class);
+                    snowball.setVelocity(new Vector(ThreadLocalRandom.current().nextDouble(-0.5, 0.5), -1.2, ThreadLocalRandom.current().nextDouble(-0.5, 0.5)));
+                    Bukkit.getScheduler().runTaskLater(plugin, snowball::remove, 30L);
+                }
+                world.spawnParticle(Particle.SNOWFLAKE, center, 100, 8, 3, 8, 0.05);
+            }
+            case DRAGONS_WRATH, DRAGONS_EYE -> {
+                world.spawnParticle(Particle.DRAGON_BREATH, center.clone().add(0, 2, 0), 160, 8, 4, 8, 0.07);
+                world.playSound(center, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1.2f);
+            }
+            case BLACK_HOLE -> {
+                world.spawnParticle(Particle.REVERSE_PORTAL, center, 200, 7, 4, 7, 0.2);
+                world.playSound(center, Sound.BLOCK_BEACON_DEACTIVATE, 0.9f, 0.55f);
+            }
+            case PROPHET -> {
+                for (int i = 0; i < 8; i++) {
+                    spawnFallingBlock(world, center.clone().add(ThreadLocalRandom.current().nextDouble(-8, 8), 18, ThreadLocalRandom.current().nextDouble(-8, 8)), Material.TNT, new Vector(0, -0.8, 0), 35);
+                }
+                world.playSound(center, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.5f);
+            }
+            case INVASION -> {
+                for (int i = 0; i < 6; i++) {
+                    Entity zombie = world.spawnEntity(center.clone().add(ThreadLocalRandom.current().nextDouble(-6, 6), 1, ThreadLocalRandom.current().nextDouble(-6, 6)), EntityType.ZOMBIE);
+                    if (zombie instanceof LivingEntity living) {
+                        prepareVisualMob(living);
+                    }
+                    Bukkit.getScheduler().runTaskLater(plugin, zombie::remove, 35L);
+                }
+            }
+            default -> {
+                world.spawnParticle(Particle.CRIT, center, 50, 2, 1, 2, 0.05);
+                world.playSound(center, Sound.ENTITY_PLAYER_LEVELUP, 0.35f, 1.7f);
+            }
+        }
+    }
+
+    private void spawnFallingBlock(World world, Location location, Material material, Vector velocity, long removeAfterTicks) {
+        BlockData blockData = material.createBlockData();
+        FallingBlock fallingBlock = world.spawnFallingBlock(location, blockData);
+        fallingBlock.setDropItem(false);
+        fallingBlock.setHurtEntities(false);
+        fallingBlock.setVelocity(velocity);
+        Bukkit.getScheduler().runTaskLater(plugin, fallingBlock::remove, removeAfterTicks);
+    }
+
+    private void safeTntFlash(World world, Location location) {
+        TNTPrimed tnt = world.spawn(location, TNTPrimed.class);
+        tnt.setFuseTicks(35);
+        tnt.setYield(0F);
+        tnt.setIsIncendiary(false);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!tnt.isDead()) {
+                tnt.remove();
+                world.spawnParticle(Particle.EXPLOSION, location, 4, 2, 1, 2, 0.01);
+            }
+        }, 28L);
+    }
+
+    private void prepareVisualMob(LivingEntity entity) {
+        entity.setAI(false);
+        entity.setInvulnerable(true);
+        entity.setSilent(true);
+        entity.setCollidable(false);
+        entity.setGlowing(true);
+        if (entity instanceof Creeper creeper) {
+            creeper.setExplosionRadius(0);
+            creeper.setPowered(false);
+        }
     }
 
     private int breakMineLayer(Player player, Block origin) {
@@ -349,8 +478,16 @@ public final class PickaxeEnchantListener implements Listener {
         if (plugin.getMineManager() == null) return;
         if (!plugin.getConfig().getBoolean("private-mines.auto-reset.enabled", true)) return;
 
+        int interval = Math.max(25, plugin.getConfig().getInt("private-mines.auto-reset.check-every-blocks", 125));
+        int count = resetCheckCounters.merge(player.getUniqueId(), 1, Integer::sum);
+        if (count < interval) return;
+        resetCheckCounters.put(player.getUniqueId(), 0);
+
         PrivateMine mine = plugin.getMineManager().getMine(player.getUniqueId());
         if (mine == null) return;
+
+        World world = Bukkit.getWorld(mine.getWorldName());
+        if (world == null) return;
 
         double resetAtPercentBroken = plugin.getConfig().getDouble("private-mines.auto-reset.reset-at-percent-broken", 75.0);
         int total = 0;
@@ -359,8 +496,8 @@ public final class PickaxeEnchantListener implements Listener {
         for (int x = mine.getMinX(); x <= mine.getMaxX(); x++) {
             for (int y = mine.getMinY(); y <= mine.getMaxY(); y++) {
                 for (int z = mine.getMinZ(); z <= mine.getMaxZ(); z++) {
-                    Block block = Bukkit.getWorld(mine.getWorldName()).getBlockAt(x, y, z);
-                    if (!isValidMineBlock(player, block) && !block.getType().isAir()) continue;
+                    Block block = world.getBlockAt(x, y, z);
+                    if (!block.getType().isAir() && !isValidMineBlock(player, block)) continue;
                     total++;
                     if (block.getType().isAir()) air++;
                 }
@@ -520,7 +657,7 @@ public final class PickaxeEnchantListener implements Listener {
         if (block == null || block.getType().isAir()) return false;
         Material material = block.getType();
         if (!material.isBlock()) return false;
-        if (!plugin.getMineManager().canBreakBlock(player, block.getLocation())) return false;
+        if (plugin.getMineManager() != null && !plugin.getMineManager().canBreakBlock(player, block.getLocation())) return false;
         return !material.name().contains("BEDROCK") && material != Material.BARRIER;
     }
 
