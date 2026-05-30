@@ -72,9 +72,12 @@ public class RebirthManager {
             return;
         }
 
-        if (!plugin.getProgressionManager().attemptRebirth(player, profile, false)) {
+        if (!plugin.getProgressionManager().canRebirth(profile)) {
             MessageUtil.send(player, "<red>You need <yellow>" + format(getBlocksRemaining(profile)) + "</yellow><red> more blocks before rebirthing.");
+            return;
         }
+
+        plugin.getProgressionManager().attemptRebirth(player, profile, false);
     }
 
     public void playSound(Player player) {
