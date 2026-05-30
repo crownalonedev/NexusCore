@@ -91,7 +91,6 @@ public final class PickaxeEnchantListener implements Listener {
 
         if (rewards.hasAnyReward()) {
             giveRewards(player, profile, rewards);
-            sendRewardActionBar(player, rewards);
         }
 
         if (affectedBlocks > 1 || rewards.hasAnyReward()) {
@@ -406,39 +405,6 @@ public final class PickaxeEnchantListener implements Listener {
 
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsed);
         }
-    }
-
-    private void sendRewardActionBar(Player player, RewardResult rewards) {
-        if (!plugin.getConfig().getBoolean("pickaxe.enchant-processing.reward-actionbar.enabled", true)) {
-            return;
-        }
-
-        StringBuilder builder = new StringBuilder("<gradient:#00CFFF:#54FCFC:#008CFC><bold>Nexus</bold></gradient> <dark_gray>»</dark_gray> ");
-        boolean added = false;
-
-        if (rewards.tokens.compareTo(BigInteger.ZERO) > 0) {
-            builder.append("<yellow>+").append(format(rewards.tokens)).append(" Tokens");
-            added = true;
-        }
-
-        if (rewards.gems.compareTo(BigInteger.ZERO) > 0) {
-            if (added) {
-                builder.append(" <dark_gray>|</dark_gray> ");
-            }
-
-            builder.append("<light_purple>+").append(format(rewards.gems)).append(" Gems");
-            added = true;
-        }
-
-        if (rewards.keys > 0) {
-            if (added) {
-                builder.append(" <dark_gray>|</dark_gray> ");
-            }
-
-            builder.append("<aqua>+").append(rewards.keys).append(" Key").append(rewards.keys == 1 ? "" : "s");
-        }
-
-        player.sendActionBar(MessageUtil.color(builder.toString()));
     }
 
     private boolean isValidMineBlock(Player player, Block block) {

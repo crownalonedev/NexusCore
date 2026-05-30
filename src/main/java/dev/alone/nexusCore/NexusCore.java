@@ -19,13 +19,7 @@ import dev.alone.nexusCore.listeners.PickaxeEnchantListener;
 import dev.alone.nexusCore.listeners.PickaxeListener;
 import dev.alone.nexusCore.listeners.ProfileListener;
 import dev.alone.nexusCore.listeners.ScoreboardListener;
-import dev.alone.nexusCore.managers.CurrencyManager;
-import dev.alone.nexusCore.managers.GuiManager;
-import dev.alone.nexusCore.managers.MineManager;
-import dev.alone.nexusCore.managers.PickaxeManager;
-import dev.alone.nexusCore.managers.ProgressionManager;
-import dev.alone.nexusCore.managers.RebirthManager;
-import dev.alone.nexusCore.managers.ScoreboardManager;
+import dev.alone.nexusCore.managers.*;
 import dev.alone.nexusCore.profiles.ProfileManager;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -47,6 +41,7 @@ public final class NexusCore extends JavaPlugin {
     private PickaxeManager pickaxeManager;
     private RebirthManager rebirthManager;
     private MineManager mineManager;
+    private ActionBarManager actionBarManager;
 
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
@@ -76,6 +71,9 @@ public final class NexusCore extends JavaPlugin {
         mineManager = new MineManager(this);
         mineManager.load();
 
+        this.actionBarManager = new ActionBarManager(this);
+        this.actionBarManager.start();
+
         registerCommands();
         registerListeners();
         registerHooks();
@@ -102,6 +100,10 @@ public final class NexusCore extends JavaPlugin {
 
         if (profileManager != null) {
             profileManager.saveAllProfiles();
+        }
+
+        if (actionBarManager != null) {
+            actionBarManager.stop();
         }
 
         sendDisableMessage();
@@ -141,6 +143,10 @@ public final class NexusCore extends JavaPlugin {
 
     public MineManager getMineManager() {
         return mineManager;
+    }
+
+    public ActionBarManager getActionBarManager() {
+        return actionBarManager;
     }
 
     public void reloadPlugin() {

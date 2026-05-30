@@ -153,10 +153,14 @@ public final class ProgressionManager {
         }
 
         int maxRank = plugin.getProfileManager().getMaxRank();
-        long rebirthRequirement = getBlocksRequiredForNextRebirth(profile);
 
-        profile.removeRankProgressBlocks(rebirthRequirement);
         profile.rebirth(maxRank);
+        profile.resetRankProgressBlocks();
+
+        if (plugin.getConfig().getBoolean("rebirth.reset-rank", true)) {
+            int rankAfterRebirth = plugin.getConfig().getInt("rebirth.rank-after-rebirth", 1);
+            profile.setRank(rankAfterRebirth, maxRank);
+        }
 
         if (automatic) {
             sendProgressionMessage(
@@ -236,11 +240,7 @@ public final class ProgressionManager {
 
         int maxRank = plugin.getProfileManager().getMaxRank();
 
-        if (!profile.canRebirth(maxRank)) {
-            return false;
-        }
-
-        return profile.getRankProgressBlocks() >= getBlocksRequiredForNextRebirth(profile);
+        return profile.canRebirth(maxRank);
     }
 
     public long getBlocksRequiredForNextRank(PlayerProfile profile) {

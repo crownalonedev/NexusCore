@@ -128,8 +128,7 @@ scoreboard:
     max-rank:
       - ""
       - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
-      - "  &d&lRebirth Ready!"
-      - "  &fProgress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
+      - "  &fRank: &b%rank_raw%"
       - "  &fBlocks Mined: &a%blocks_mined%"
       - "  &fGang: &b%gang%"
       - ""
@@ -426,3 +425,26 @@ private-mines:
     teleport: ENTITY_ENDERMAN_TELEPORT
     reset: BLOCK_BEACON_ACTIVATE
     error: ENTITY_VILLAGER_NO
+
+action-bar:
+  enabled: true
+  update-interval-ticks: 20
+  bar-length: 16
+
+  # Leave empty to show in every world.
+  worlds: []
+
+  symbols:
+    filled: "▰"
+    empty: "▱"
+
+  colors:
+    primary: "#00CFFF"
+    secondary: "#0066FF"
+    accent: "#FCFC54"
+    empty: "#1B2A36"
+
+  formats:
+    rankup: "<gradient:#00CFFF:#0066FF><bold>RANKUP</bold></gradient> <dark_gray>┃</dark_gray> <white>Rank <#00CFFF>%current%</#00CFFF> <gray>➜</gray> <#0066FF>%next%</#0066FF> <dark_gray>┃</dark_gray> %bar% <gray>%percent%%</gray> <dark_gray>┃</dark_gray> <#FCFC54>%detail%</#FCFC54>"
+    rebirth: "<gradient:#00CFFF:#0066FF><bold>REBIRTH</bold></gradient> <dark_gray>┃</dark_gray> <white>RB <#00CFFF>%current%</#00CFFF> <gray>➜</gray> <#0066FF>%next%</#0066FF> <dark_gray>┃</dark_gray> %bar% <gray>%percent%%</gray> <dark_gray>┃</dark_gray> <#FCFC54>%detail%</#FCFC54>"
+    ready-rebirth: "<gradient:#00CFFF:#0066FF><bold>MAX RANK</bold></gradient> <dark_gray>┃</dark_gray> %bar% <gray>100%</gray> <dark_gray>┃</dark_gray> <#FCFC54>Ready for /rebirth</#FCFC54>"
