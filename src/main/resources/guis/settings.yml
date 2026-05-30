@@ -49,6 +49,9 @@ items:
       - "<gray>Rank: <aqua>%rank%"
       - "<gray>Rebirth: <light_purple>%rebirth%"
       - "<gray>Ascension: <gold>%ascension%"
+      - ""
+      - "<dark_gray>Use the buttons below to customize"
+      - "<dark_gray>your Nexus prison experience."
 
   auto-rebirth:
     slot: 11
@@ -61,7 +64,23 @@ items:
       - "<gray>Status: %auto_rebirth%"
       - ""
       - "<gray>When enabled, you will automatically"
-      - "<gray>rebirth once you reach max rank."
+      - "<gray>rebirth once you have the required"
+      - "<gray>blocks, Tokens, and Gems."
+      - ""
+      - "<yellow>Click to toggle."
+
+  hide-max-enchants:
+    slot: 13
+    type: MATERIAL
+    enabled-material: LIME_DYE
+    disabled-material: GRAY_DYE
+    name: "<gradient:#00CFFF:#0066FF><bold>Hide Max Enchants</bold></gradient>"
+    lore:
+      - ""
+      - "<gray>Status: %hide_max_enchants%"
+      - ""
+      - "<gray>When enabled, maxed enchants will"
+      - "<gray>be hidden from the pickaxe enchant menu."
       - ""
       - "<yellow>Click to toggle."
 
