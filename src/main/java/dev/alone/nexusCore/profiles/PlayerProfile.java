@@ -32,6 +32,7 @@ public final class PlayerProfile {
     private boolean autoPickup;
     private boolean autoRebirth;
     private boolean autoAscension;
+    private boolean hideMaxEnchants;
 
     private int pickaxeLevel;
     private long pickaxeXp;
@@ -69,6 +70,7 @@ public final class PlayerProfile {
         this.autoPickup = true;
         this.autoRebirth = false;
         this.autoAscension = false;
+        this.hideMaxEnchants = false;
 
         this.pickaxeLevel = 1;
         this.pickaxeXp = 0L;
@@ -437,6 +439,14 @@ public final class PlayerProfile {
 
     public void setAutoAscension(boolean autoAscension) {
         this.autoAscension = autoAscension;
+    }
+
+    public boolean isHideMaxEnchants() {
+        return hideMaxEnchants;
+    }
+
+    public void setHideMaxEnchants(boolean hideMaxEnchants) {
+        this.hideMaxEnchants = hideMaxEnchants;
     }
 
     public int getPickaxeLevel() {
