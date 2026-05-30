@@ -90,6 +90,15 @@ progression:
 rebirth:
   enabled: true
 
+  costs:
+    tokens:
+      base: 100000
+      increase-per-rebirth: 75000
+
+    gems:
+      base: 250
+      increase-per-rebirth: 175
+
   # Rebirth no longer resets rank. After rank 1000, rebirth behaves like ranking up.
   # Players stay rank 1000 forever, so max-rank mine unlocks stay unlocked forever.
   reset-rank: false
@@ -221,6 +230,8 @@ messages:
     multi-rankup: "<green>You ranked up <aqua>%rankups%x <green>and reached <aqua>Rank %rank%<green>!"
     max-rank: "<yellow>You reached max rank. Rank is now capped, so keep mining for rebirth progress."
     cannot-rebirth: "<red>You need <white>%blocks_remaining_rebirth% <red>more blocks before rebirthing."
+    cannot-rebirth-tokens: "<red>You need <yellow>%rebirth_token_cost%</yellow><red> tokens to rebirth."
+    cannot-rebirth-gems: "<red>You need <light_purple>%rebirth_gem_cost%</light_purple><red> gems to rebirth."
     rebirth: "<light_purple>You rebirthed! You are now <white>%rebirth%<light_purple>."
     auto-rebirth: "<light_purple>Rebirth complete! You are now <white>%rebirth%<light_purple>."
     cannot-ascend: "<red>You need <white>%rebirths_until_ascension% <red>more rebirths before ascending."
@@ -300,26 +311,24 @@ pickaxe:
     - ""
     - "<gray>Owner: <aqua>%player%</aqua>"
     - "<gray>Slot: <aqua>%slot%</aqua>"
-    - "<gray>Tokens: <yellow>%tokens%</yellow> <dark_gray>|</dark_gray> <gray>Gems: <light_purple>%gems%</light_purple>"
-    - ""
-    - "<gradient:#00CFFF:#0066FF><bold>Enchants</bold></gradient>"
-    - "  <gray>Efficiency: <aqua>%efficiency%</aqua>"
-    - "  <gray>Fortune: <aqua>%fortune%</aqua>"
-    - "  <gray>Haste: <aqua>%haste%</aqua>"
-    - "  <gray>Speed: <aqua>%speed%</aqua>"
-    - "  <gray>Token Finder: <yellow>%token_finder%</yellow>"
-    - "  <gray>Gem Finder: <light_purple>%gem_finder%</light_purple>"
-    - "  <gray>Key Finder: <aqua>%key_finder%</aqua>"
-    - "  <gray>Lucky: <green>%lucky%</green>"
-    - "  <gray>Explosive: <red>%explosive%</red>"
-    - "  <gray>Jackhammer: <gold>%jackhammer%</gold>"
-    - "  <gray>Laser: <blue>%laser%</blue>"
+    - "<gray>Pickaxe Level: <aqua>%pickaxe_level%</aqua>"
+    - "<gray>Pickaxe XP: <aqua>%pickaxe_xp%</aqua><dark_gray>/</dark_gray><aqua>%pickaxe_xp_required%</aqua>"
+    - "<gray>Tokens: <yellow>%tokens%</yellow> <dark_gray>|</dark_gray> <gray>Gems: <light_purple>%gems%</light_purple> <dark_gray>|</dark_gray> <gray>Beacons: <aqua>%beacons%</aqua>"
     - ""
     - "<yellow>Right-click to open enchants."
+
+  leveling:
+    max-level: 500
+    xp-base: 250
+    xp-increase-per-level: 125
 
   enchant-processing:
     enabled: true
     allow-creative: false
+
+    proc-messages:
+      enabled: true
+
     reward-actionbar:
       enabled: true
 
