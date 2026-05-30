@@ -105,6 +105,8 @@ public class MineMenus {
                         "<gray>Select 1-4 blocks for your mine.",
                         "<gray>Your selected blocks will be randomly mixed.",
                         "",
+                        "<green>Unlocked forever after reaching rank <aqua>" + requiredRank + "</aqua><green>.",
+                        "",
                         "<yellow>Click to open selector."
                 )
                         : List.of(
@@ -120,9 +122,10 @@ public class MineMenus {
                 "<gradient:#0066FF:#00CFFF><bold>Mine Size</bold></gradient>",
                 "<gray>Current Size: <aqua>" + mine.getWidth() + "x" + mine.getHeight() + "x" + mine.getWidth(),
                 "<gray>Upgrade Tier: <aqua>" + size.tier() + "/" + size.maxTier(),
-                "<gray>Max Rank: <aqua>1000",
+                "<gray>Rank Cap: <aqua>" + plugin.getProfileManager().getMaxRank(),
                 "",
-                "<dark_gray>Your mine grows as your rank increases."
+                "<dark_gray>Your mine grows as your rank increases.",
+                "<dark_gray>After max rank, size stays unlocked forever."
         ));
 
         inventory.setItem(33, MineItemUtil.item(
