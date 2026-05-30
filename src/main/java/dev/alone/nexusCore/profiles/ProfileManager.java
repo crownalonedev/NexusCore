@@ -75,10 +75,19 @@ public class ProfileManager {
         String savedUsername = getString(config, username, "username", "name");
         PlayerProfile profile = new PlayerProfile(uuid, savedUsername, getStartingRank());
 
-        profile.setRank(getInt(config, getStartingRank(), "progression.rank", "prison.rank", "rank"), getMaxRank());
+        int maxRank = getMaxRank();
+        int savedRank = getInt(config, getStartingRank(), "progression.rank", "prison.rank", "rank");
+        int savedRebirth = getInt(config, 0, "progression.rebirth", "prison.rebirths", "rebirth");
+        int savedAscension = getInt(config, 0, "progression.ascension", "prison.ascension", "ascension");
+
+        profile.setRank(savedRank, maxRank);
         profile.setPrestige(getInt(config, 0, "progression.prestige", "prison.prestige", "prestige"));
-        profile.setAscension(getInt(config, 0, "progression.ascension", "prison.ascension", "ascension"));
-        profile.setRebirth(getInt(config, 0, "progression.rebirth", "prison.rebirths", "rebirth"));
+        profile.setAscension(savedAscension);
+        profile.setRebirth(savedRebirth);
+
+        if ((profile.getRebirth() > 0 || profile.getAscension() > 0) && profile.getRank() < maxRank) {
+            profile.setRank(maxRank, maxRank);
+        }
 
         profile.setMoney(parseBigDecimal(getString(config, "0", "economy.money", "money")));
         profile.setTokens(parseBigInteger(getString(config, "0", "economy.tokens", "tokens")));
