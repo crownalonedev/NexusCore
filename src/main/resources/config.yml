@@ -177,8 +177,8 @@ chat:
 
   formats:
     rank: "&8[%rank%&8] %luckperms-prefix% %player_name% &8» &f%message%"
-    rebirth: "&8[%rebirth%&8] %luckperms-prefix% %player_name% &8» &f%message%"
-    ascension: "&8[%ascension%&8] &8[%rebirth%&8] %luckperms-prefix% %player_name% &8» &f%message%"
+    rebirth: "&8[&l%rebirth%&r&8] %luckperms-prefix% %player_name% &8» &f%message%"
+    ascension: "&8[&6&l%ascension%&r&8] &8[&d&l%rebirth%&r&8] %luckperms-prefix% %player_name% &8» &f%message%"
 
   colors:
     rank:
@@ -334,6 +334,10 @@ private-mines:
   empty-side-layers: 1
   empty-bottom-layers: 2
   upgrade-check-interval-seconds: 2
+
+  auto-reset:
+    enabled: true
+    reset-at-percent-broken: 75.0
 
   protection:
     cancel-all-player-damage: true
