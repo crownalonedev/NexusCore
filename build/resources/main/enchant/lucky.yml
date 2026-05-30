@@ -1,0 +1,7 @@
+enabled: true
+display-name: "Lucky"
+max-level: 250
+base-token-cost: "3500"
+token-cost-increase: "1250"
+chance-boost-per-level: 0.02
+reward-boost-percent-per-level: 0.25

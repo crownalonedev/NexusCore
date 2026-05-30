@@ -1,0 +1,90 @@
+settings:
+  title: "<gradient:#00CFFF:#0066FF><bold>Nexus Settings</bold></gradient>"
+  size: 27
+
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "
+  slots:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 17
+    - 18
+    - 19
+    - 21
+    - 23
+    - 25
+    - 26
+
+accent-filler:
+  enabled: true
+  material: LIGHT_BLUE_STAINED_GLASS_PANE
+  name: " "
+  slots:
+    - 10
+    - 12
+    - 14
+    - 16
+    - 20
+    - 24
+
+items:
+  info:
+    slot: 4
+    type: MATERIAL
+    material: NETHER_STAR
+    name: "<gradient:#00CFFF:#0066FF><bold>Your Settings</bold></gradient>"
+    lore:
+      - ""
+      - "<gray>Player: <aqua>%player%"
+      - "<gray>Rank: <aqua>%rank%"
+      - "<gray>Rebirth: <light_purple>%rebirth%"
+      - "<gray>Ascension: <gold>%ascension%"
+
+  auto-rebirth:
+    slot: 11
+    type: MATERIAL
+    enabled-material: LIME_DYE
+    disabled-material: GRAY_DYE
+    name: "<light_purple><bold>Auto Rebirth</bold>"
+    lore:
+      - ""
+      - "<gray>Status: %auto_rebirth%"
+      - ""
+      - "<gray>When enabled, you will automatically"
+      - "<gray>rebirth once you reach max rank."
+      - ""
+      - "<yellow>Click to toggle."
+
+  auto-ascension:
+    slot: 15
+    type: MATERIAL
+    enabled-material: LIME_DYE
+    disabled-material: GRAY_DYE
+    name: "<gold><bold>Auto Ascension</bold>"
+    lore:
+      - ""
+      - "<gray>Status: %auto_ascension%"
+      - ""
+      - "<gray>When enabled, you will automatically"
+      - "<gray>ascend once you have enough rebirths."
+      - ""
+      - "<yellow>Click to toggle."
+
+  close:
+    slot: 22
+    type: MATERIAL
+    material: BARRIER
+    name: "<red><bold>Close</bold>"
+    lore:
+      - ""
+      - "<gray>Click to close this menu."

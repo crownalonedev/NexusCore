@@ -1,0 +1,11 @@
+enabled: true
+display-name: "Laser"
+max-level: 100
+base-token-cost: "6500"
+token-cost-increase: "2200"
+base-chance: 0.0
+chance-per-level: 0.05
+max-chance: 25.0
+length: 8
+length-increase-every-levels: 25
+max-length: 32

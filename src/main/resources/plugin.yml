@@ -1,0 +1,124 @@
+name: NexusCore
+version: '${version}'
+
+main: dev.alone.nexusCore.NexusCore
+api-version: '1.21.4'
+load: POSTWORLD
+softdepend: [PlaceholderAPI, LuckPerms]
+
+commands:
+  nexuscore:
+    description: Main NexusCore command.
+    aliases: [nexus, ncore]
+    usage: /nexuscore
+
+  fly:
+    description: Toggle flight.
+    usage: /fly [player]
+
+  gmc:
+    description: Change gamemode to creative.
+    usage: /gmc [player]
+
+  gms:
+    description: Change gamemode to survival.
+    usage: /gms [player]
+
+  gmsp:
+    description: Change gamemode to spectator.
+    usage: /gmsp [player]
+
+  gma:
+    description: Change gamemode to adventure.
+    usage: /gma [player]
+
+  settings:
+    description: Open your NexusCore settings.
+    usage: /settings
+
+  balance:
+    description: View your NexusCore balances.
+    aliases: [bal, money]
+    usage: /balance [player]
+
+  rebirth:
+    description: Rebirth after reaching max rank.
+    usage: /rebirth
+
+  ascension:
+    description: Ascend after enough rebirths.
+    aliases: [ascend]
+    usage: /ascension
+
+  pickaxe:
+    description: Nexus pickaxe command.
+    aliases: [pick, nexuspickaxe]
+    usage: /pickaxe
+
+  enchants:
+    description: Open the Nexus pickaxe enchant menu.
+    aliases: [enchant, ce, pickaxeenchants, penchants, pe]
+    usage: /enchants
+
+  mine:
+    description: Opens your private mine menu.
+    usage: /mine
+    aliases:
+      - mines
+      - pmine
+      - privatemine
+
+permissions:
+  nexuscore.admin:
+    description: Allows access to NexusCore admin commands.
+    default: op
+
+  nexuscore.command.settings:
+    description: Allows usage of /settings.
+    default: true
+
+  nexuscore.command.balance:
+    description: Allows usage of /balance.
+    default: true
+
+  nexuscore.command.balance.others:
+    description: Allows checking another player's balance.
+    default: op
+
+  nexuscore.command.rebirth:
+    description: Allows usage of /rebirth.
+    default: true
+
+  nexuscore.command.ascension:
+    description: Allows usage of /ascension and /ascend.
+    default: true
+
+  nexuscore.command.fly:
+    description: Allows usage of /fly.
+    default: op
+
+  nexuscore.command.fly.others:
+    description: Allows usage of /fly on other players.
+    default: op
+
+  nexuscore.command.gamemode:
+    description: Allows usage of gamemode shortcut commands.
+    default: op
+
+  nexuscore.command.gamemode.others:
+    description: Allows changing other players' gamemode.
+    default: op
+
+  nexuscore.command.enchants:
+    description: Allows usage of /enchants.
+    default: true
+
+  nexuscore.pickaxe.give:
+    description: Allows giving/syncing another player's Nexus Pickaxe.
+    default: op
+
+  nexuscore.mine.use:
+    default: true
+
+  nexuscore.mine.admin:
+    default: op

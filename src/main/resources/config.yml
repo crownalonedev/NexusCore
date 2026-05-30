@@ -1,0 +1,428 @@
+settings:
+  debug: false
+
+currencies:
+  format:
+    compact: true
+    suffixes:
+      - ""
+      - "K"
+      - "M"
+      - "B"
+      - "T"
+      - "Q"
+      - "Qi"
+      - "Sx"
+      - "Sp"
+      - "Oc"
+      - "No"
+      - "Dc"
+
+  money:
+    display-name: "Money"
+    symbol: "$"
+    decimal-places: 2
+
+  tokens:
+    display-name: "Tokens"
+    symbol: ""
+
+  gems:
+    display-name: "Gems"
+    symbol: ""
+
+  beacons:
+    display-name: "Gang Beacons"
+    symbol: ""
+    gang-top-only: true
+    show-in-balance: false
+
+progression:
+  starting-rank: 1
+  max-rank: 1000
+  rebirths-required-to-ascend: 10
+  pickaxe-xp-per-block: 1
+
+  automatic-rankup:
+    enabled: true
+    rank-progress-per-block: 1
+
+  blocks-per-rank:
+    base: 100
+    increase-per-rank: 25
+    rebirth-multiplier: 0.15
+    ascension-multiplier: 0.35
+
+  blocks-per-rebirth:
+    base: 2500
+    increase-per-rebirth: 500
+    ascension-multiplier: 0.50
+
+  excluded-worlds:
+    - world_nether
+    - world_the_end
+
+  ignored-materials:
+    - AIR
+    - CAVE_AIR
+    - VOID_AIR
+    - BEDROCK
+    - BARRIER
+    - COMMAND_BLOCK
+    - CHAIN_COMMAND_BLOCK
+    - REPEATING_COMMAND_BLOCK
+    - STRUCTURE_BLOCK
+    - STRUCTURE_VOID
+    - LIGHT
+    - CHEST
+    - TRAPPED_CHEST
+    - BARREL
+    - FURNACE
+    - BLAST_FURNACE
+    - SMOKER
+    - HOPPER
+    - DISPENSER
+    - DROPPER
+    - SPAWNER
+    - TRIAL_SPAWNER
+    - VAULT
+
+rebirth:
+  enabled: true
+
+  costs:
+    tokens:
+      base: 100000
+      increase-per-rebirth: 75000
+
+    gems:
+      base: 250
+      increase-per-rebirth: 175
+
+  reset-rank: true
+  rank-after-rebirth: 1
+
+  reset-blocks-mined: false
+
+scoreboard:
+  enabled: true
+  title: "<gradient:#008CFC:#54FCFC:#008CFC><bold><underlined>NexusMC </underlined></bold></gradient><gradient:#008CFC:#54FCFC:#008CFC><bold><underlined>Prison</underlined></bold></gradient>"
+  server-ip: "play.nexusmc.net"
+  default-gang: "None"
+
+  templates:
+    rank:
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
+      - "  &fRank: &b%rank_raw%"
+      - "  &fBlocks Mined: &a%blocks_mined%"
+      - "  &fGang: &b%gang%"
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>Balance:</bold></gradient>"
+      - "  &fTokens: &e%tokens%"
+      - "  &fGems: &d%gems%"
+      - "  &fBeacons: &b%beacons%"
+      - " "
+      - "&7%server_ip%"
+
+    max-rank:
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
+      - "  &d&lRebirth Ready!"
+      - "  &fProgress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
+      - "  &fBlocks Mined: &a%blocks_mined%"
+      - "  &fGang: &b%gang%"
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>Balance:</bold></gradient>"
+      - "  &fTokens: &e%tokens%"
+      - "  &fGems: &d%gems%"
+      - "  &fBeacons: &b%beacons%"
+      - " "
+      - "&7%server_ip%"
+
+    rebirth:
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
+      - "  &fRebirth: &d%rebirth%"
+      - "  &fProgress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
+      - "  &fBlocks Mined: &a%blocks_mined%"
+      - "  &fGang: &b%gang%"
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>Balance:</bold></gradient>"
+      - "  &fTokens: &e%tokens%"
+      - "  &fGems: &d%gems%"
+      - "  &fBeacons: &b%beacons%"
+      - " "
+      - "&7%server_ip%"
+
+    ascension:
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
+      - "  &fRebirth: &d%rebirth%"
+      - "  &fAscension: &6%ascension%"
+      - "  &fProgress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
+      - "  &fBlocks Mined: &a%blocks_mined%"
+      - "  &fGang: &b%gang%"
+      - ""
+      - "<gradient:#008CFC:#54FCFC:#008CFC><bold>Balance:</bold></gradient>"
+      - "  &fTokens: &e%tokens%"
+      - "  &fGems: &d%gems%"
+      - "  &fBeacons: &b%beacons%"
+      - " "
+      - "&7%server_ip%"
+
+chat:
+  enabled: true
+
+  formats:
+    rank: "&8[%rank%&8] %luckperms-prefix% %player_name% &8» &f%message%"
+    rebirth: "&8[%rebirth%&8] %luckperms-prefix% %player_name% &8» &f%message%"
+    ascension: "&8[%ascension%&8] &8[%rebirth%&8] %luckperms-prefix% %player_name% &8» &f%message%"
+
+  colors:
+    rank:
+      - "&f"
+      - "&a"
+      - "&e"
+      - "&6"
+      - "&b"
+      - "&3"
+      - "&d"
+      - "&5"
+      - "&c"
+      - "&4"
+
+    rebirth:
+      - "&d"
+      - "&5"
+      - "&b"
+      - "&3"
+      - "&a"
+      - "&e"
+      - "&6"
+      - "&c"
+      - "&4"
+      - "&f"
+
+    ascension:
+      - "&6"
+      - "&e"
+      - "&b"
+      - "&3"
+      - "&d"
+      - "&5"
+      - "&c"
+      - "&4"
+      - "&a"
+      - "&f"
+
+messages:
+  prefix: "<gradient:#00CFFF:#0066FF><bold>NexusMC</bold></gradient> <dark_gray>»</dark_gray> "
+  no-permission: "<red>You do not have permission to use this command."
+  reload: "<green>NexusCore has been reloaded successfully."
+  player-only: "<red>Only players can use this command."
+
+  progression:
+    rankup: "<green>You ranked up to <aqua>Rank %rank%<green>!"
+    multi-rankup: "<green>You ranked up <aqua>%rankups%x <green>and reached <aqua>Rank %rank%<green>!"
+    max-rank: "<yellow>You reached max rank. Keep mining for rebirth progress."
+    cannot-rebirth: "<red>You need <white>%blocks_remaining_rebirth% <red>more blocks before rebirthing."
+    rebirth: "<light_purple>You rebirthed! You are now <white>%rebirth%<light_purple>."
+    auto-rebirth: "<light_purple>Auto Rebirth complete! You are now <white>%rebirth%<light_purple>."
+    cannot-ascend: "<red>You need <white>%rebirths_until_ascension% <red>more rebirths before ascending."
+    ascension: "<gold>You ascended! Your rebirths have reset. You are now <white>%ascension%<gold>."
+    auto-ascension: "<gold>Auto Ascension complete! Your rebirths have reset. You are now <white>%ascension%<gold>."
+
+sounds:
+  reload:
+    enabled: true
+    sound: ENTITY_PLAYER_LEVELUP
+    volume: 1.0
+    pitch: 1.25
+
+  rankup:
+    enabled: true
+    sound: ENTITY_EXPERIENCE_ORB_PICKUP
+    volume: 1.0
+    pitch: 1.4
+
+  rebirth:
+    enabled: true
+    sound: UI_TOAST_CHALLENGE_COMPLETE
+    volume: 1.0
+    pitch: 1.1
+
+  ascension:
+    enabled: true
+    sound: ENTITY_ENDER_DRAGON_GROWL
+    volume: 0.7
+    pitch: 1.6
+
+  menus:
+    open:
+      enabled: true
+      sound: UI_BUTTON_CLICK
+      volume: 1.0
+      pitch: 1.2
+
+    close:
+      enabled: true
+      sound: UI_BUTTON_CLICK
+      volume: 1.0
+      pitch: 0.8
+
+    toggle:
+      enabled: true
+      sound: UI_BUTTON_CLICK
+      volume: 1.0
+      pitch: 1.5
+
+  fly:
+    enable:
+      enabled: true
+      sound: ENTITY_EXPERIENCE_ORB_PICKUP
+      volume: 1.0
+      pitch: 1.5
+
+    disable:
+      enabled: true
+      sound: BLOCK_NOTE_BLOCK_BASS
+      volume: 1.0
+      pitch: 1.0
+
+  gamemode:
+    enabled: true
+    sound: UI_BUTTON_CLICK
+    volume: 1.0
+    pitch: 1.4
+
+pickaxe:
+  auto-give-on-first-join: true
+  give-if-missing-on-join: true
+  default-slot: 0
+  material: "NETHERITE_PICKAXE"
+  name: "<gradient:#00CFFF:#0066FF><bold>Nexus Pickaxe</bold></gradient>"
+  lore:
+    - ""
+    - "<gray>Owner: <aqua>%player%</aqua>"
+    - "<gray>Slot: <aqua>%slot%</aqua>"
+    - "<gray>Tokens: <yellow>%tokens%</yellow> <dark_gray>|</dark_gray> <gray>Gems: <light_purple>%gems%</light_purple>"
+    - ""
+    - "<gradient:#00CFFF:#0066FF><bold>Enchants</bold></gradient>"
+    - "  <gray>Efficiency: <aqua>%efficiency%</aqua>"
+    - "  <gray>Fortune: <aqua>%fortune%</aqua>"
+    - "  <gray>Haste: <aqua>%haste%</aqua>"
+    - "  <gray>Speed: <aqua>%speed%</aqua>"
+    - "  <gray>Token Finder: <yellow>%token_finder%</yellow>"
+    - "  <gray>Gem Finder: <light_purple>%gem_finder%</light_purple>"
+    - "  <gray>Key Finder: <aqua>%key_finder%</aqua>"
+    - "  <gray>Lucky: <green>%lucky%</green>"
+    - "  <gray>Explosive: <red>%explosive%</red>"
+    - "  <gray>Jackhammer: <gold>%jackhammer%</gold>"
+    - "  <gray>Laser: <blue>%laser%</blue>"
+    - ""
+    - "<yellow>Right-click to open enchants."
+
+  enchant-processing:
+    enabled: true
+    allow-creative: false
+    reward-actionbar:
+      enabled: true
+
+
+
+private-mines:
+  enabled: true
+  world: "nexus_private_mines"
+
+  # The saved base Y includes the empty bottom layers.
+  # With empty-bottom-layers: 2, this makes the first mineable blocks start at Y 116.
+  base-y: 114
+  mine-block-start-y: 116
+  spacing: 1500
+  mines-per-row: 50
+
+  hollow-walls: true
+  empty-side-layers: 1
+  empty-bottom-layers: 2
+  upgrade-check-interval-seconds: 2
+
+  protection:
+    cancel-all-player-damage: true
+    teleport-on-suffocation: true
+
+  block-selection:
+    required-rank: 1000
+    max-blocks: 4
+
+  size-scaling:
+    enabled: true
+    rank-cap: 1000
+    levels-per-upgrade: 25
+
+    base-radius: 12
+    base-height: 30
+
+    max-radius: 55
+    max-height: 75
+
+    reset-blocks-per-tick: 3500
+
+  default-palette:
+    STONE: 70
+    COAL_ORE: 15
+    IRON_ORE: 10
+    COPPER_ORE: 5
+
+  auto-palettes:
+    blocks-per-tier: 4
+    blocks:
+      - CALCITE
+      - SMOOTH_QUARTZ
+      - QUARTZ_BLOCK
+      - SEA_LANTERN
+      - PRISMARINE
+      - DARK_PRISMARINE
+      - AMETHYST_BLOCK
+      - PURPUR_BLOCK
+      - BLUE_ICE
+      - PACKED_ICE
+      - COPPER_BLOCK
+      - CUT_COPPER
+      - EXPOSED_COPPER
+      - WEATHERED_COPPER
+      - OXIDIZED_COPPER
+      - RAW_COPPER_BLOCK
+      - RAW_IRON_BLOCK
+      - RAW_GOLD_BLOCK
+      - COAL_BLOCK
+      - IRON_BLOCK
+      - GOLD_BLOCK
+      - REDSTONE_BLOCK
+      - LAPIS_BLOCK
+      - DIAMOND_BLOCK
+      - EMERALD_BLOCK
+      - LIGHT_BLUE_CONCRETE
+      - CYAN_CONCRETE
+      - BLUE_CONCRETE
+      - PURPLE_CONCRETE
+      - MAGENTA_CONCRETE
+      - LIME_CONCRETE
+      - ORANGE_CONCRETE
+      - WHITE_CONCRETE
+      - BLACK_CONCRETE
+      - DEEPSLATE_TILES
+      - DEEPSLATE_BRICKS
+      - POLISHED_DEEPSLATE
+      - POLISHED_BLACKSTONE_BRICKS
+      - GILDED_BLACKSTONE
+      - END_STONE_BRICKS
+      - TUFF
+      - POLISHED_TUFF
+      - TUFF_BRICKS
+
+  sounds:
+    click: UI_BUTTON_CLICK
+    teleport: ENTITY_ENDERMAN_TELEPORT
+    reset: BLOCK_BEACON_ACTIVATE
+    error: ENTITY_VILLAGER_NO

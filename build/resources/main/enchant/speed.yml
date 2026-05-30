@@ -1,0 +1,5 @@
+enabled: true
+display-name: "Speed"
+max-level: 5
+base-token-cost: "2500"
+token-cost-increase: "2500"

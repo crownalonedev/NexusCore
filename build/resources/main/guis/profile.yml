@@ -1,0 +1,221 @@
+settings:
+  title: "<gradient:#00CFFF:#0066FF><bold>Nexus Profile</bold></gradient> <dark_gray>| <white>%player%"
+  size: 54
+
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "
+  slots:
+    - 0
+    - 2
+    - 3
+    - 5
+    - 6
+    - 8
+    - 9
+    - 17
+    - 18
+    - 26
+    - 27
+    - 35
+    - 36
+    - 44
+    - 45
+    - 47
+    - 48
+    - 50
+    - 51
+    - 53
+
+accent-filler:
+  enabled: true
+  material: LIGHT_BLUE_STAINED_GLASS_PANE
+  name: " "
+  slots:
+    - 1
+    - 7
+    - 46
+    - 52
+
+items:
+  player-head:
+    slot: 4
+    type: PLAYER_HEAD
+    name: "<gradient:#00CFFF:#0066FF><bold>%player%</bold></gradient>"
+    lore:
+      - "<dark_gray>Nexus Network Profile"
+      - ""
+      - "<gray>Rank: <aqua>%rank%<dark_gray>/<aqua>%max_rank%"
+      - "<gray>Rebirth: <light_purple>%rebirth%"
+      - "<gray>Ascension: <gold>%ascension%"
+      - ""
+      - "<gray>Blocks Mined: <white>%blocks_mined%"
+
+  progression:
+    slot: 10
+    type: MATERIAL
+    material: NETHER_STAR
+    name: "<gradient:#00CFFF:#0066FF><bold>Progression</bold></gradient>"
+    lore:
+      - ""
+      - "<gray>Current Rank: <aqua>%rank%<dark_gray>/<aqua>%max_rank%"
+      - "<gray>Next Rank: <white>%next_rank%"
+      - ""
+      - "<gray>Rank Progress:"
+      - "%rank_progress_bar% <white>%rank_progress_percent%%"
+      - "<gray>Blocks: <aqua>%rank_progress_blocks%<dark_gray>/<aqua>%blocks_required_next_rank%"
+      - "<gray>Remaining: <white>%blocks_remaining_next_rank%"
+      - ""
+      - "<gray>Ready to Rebirth: %can_rebirth%"
+
+  rebirth:
+    slot: 19
+    type: MATERIAL
+    material: TOTEM_OF_UNDYING
+    name: "<light_purple><bold>Rebirth</bold></light_purple>"
+    lore:
+      - ""
+      - "<gray>Rebirths: <light_purple>%rebirth%"
+      - "<gray>Requirement: <aqua>Rank %max_rank%"
+      - ""
+      - "<gray>Ready: %can_rebirth%"
+      - "<gray>Auto Rebirth: %auto_rebirth%"
+      - ""
+      - "<dark_gray>Use /rebirth at max rank."
+
+  ascension:
+    slot: 21
+    type: MATERIAL
+    material: END_CRYSTAL
+    name: "<gold><bold>Ascension</bold></gold>"
+    lore:
+      - ""
+      - "<gray>Ascensions: <gold>%ascension%"
+      - "<gray>Rebirths Required: <light_purple>%rebirths_required%"
+      - "<gray>Rebirths Needed: <white>%rebirths_until_ascension%"
+      - ""
+      - "<gray>Ready: %can_ascend%"
+      - "<gray>Auto Ascension: %auto_ascension%"
+      - ""
+      - "<dark_gray>Use /ascend when ready."
+
+  money:
+    slot: 12
+    type: BASE64_HEAD
+    texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzMyNGE3ZDYxY2NkNDRiMDMxNzQ0YjUxN2Y5MTFhNWM0NjE2MTRiOTUzYjE3ZjY0ODI4MmUxNDdiMjlkMTBlIn19fQ=="
+    name: "<green><bold>Money</bold></green>"
+    lore:
+      - ""
+      - "<gray>Balance:"
+      - "<green>$%money%"
+
+  tokens:
+    slot: 14
+    type: BASE64_HEAD
+    texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTVmZDY3ZDU2ZmZjNTNmYjM2MGExNzg3OWQ5YjUzMzhkNzMzMmQ4ZjEyOTQ5MWE1ZTE3ZThkNmU4YWVhNmMzYSJ9fX0="
+    name: "<yellow><bold>Tokens</bold></yellow>"
+    lore:
+      - ""
+      - "<gray>Token Balance:"
+      - "<yellow>%tokens%"
+
+  gems:
+    slot: 16
+    type: BASE64_HEAD
+    texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDg4NmUwZjQxMTg1YjE4YTNhZmQ4OTQ4OGQyZWU0Y2FhMDczNTAwOTI0N2NjY2YwMzljZWQ2YWVkNzUyZmYxYSJ9fX0="
+    name: "<light_purple><bold>Gems</bold></light_purple>"
+    lore:
+      - ""
+      - "<gray>Gem Balance:"
+      - "<light_purple>%gems%"
+
+  beacons:
+    slot: 20
+    type: MATERIAL
+    material: BEACON
+    name: "<aqua><bold>Beacons</bold></aqua>"
+    lore:
+      - ""
+      - "<gray>Beacon Balance:"
+      - "<aqua>%beacons%"
+
+  mining-stats:
+    slot: 22
+    type: MATERIAL
+    material: DIAMOND_ORE
+    name: "<white><bold>Mining Stats</bold></white>"
+    lore:
+      - ""
+      - "<gray>Blocks Mined: <white>%blocks_mined%"
+      - "<gray>Raw Blocks Mined: <white>%raw_blocks_mined%"
+      - ""
+      - "<gray>Rank Progress Blocks: <aqua>%rank_progress_blocks%"
+
+  backpack:
+    slot: 24
+    type: MATERIAL
+    material: CHEST
+    name: "<gold><bold>Backpack</bold>"
+    lore:
+      - ""
+      - "<gray>Backpack Size:"
+      - "<gold>%backpack_size%"
+
+  pickaxe:
+    slot: 28
+    type: MATERIAL
+    material: DIAMOND_PICKAXE
+    name: "<aqua><bold>Pickaxe</bold>"
+    lore:
+      - ""
+      - "<gray>Level: <aqua>%pickaxe_level%"
+      - "<gray>XP: <white>%pickaxe_xp%"
+
+  current-mine:
+    slot: 30
+    type: MATERIAL
+    material: COMPASS
+    name: "<blue><bold>Current Mine</bold></blue>"
+    lore:
+      - ""
+      - "<gray>Mine:"
+      - "<blue>%current_mine%"
+      - ""
+      - "<gray>Mine Number: <white>%current_mine_number%"
+
+  settings:
+    slot: 32
+    type: MATERIAL
+    material: COMPARATOR
+    name: "<yellow><bold>Settings</bold>"
+    lore:
+      - ""
+      - "<gray>AutoSell: %autosell%"
+      - "<gray>AutoPickup: %autopickup%"
+      - "<gray>Auto Rebirth: %auto_rebirth%"
+      - "<gray>Auto Ascension: %auto_ascension%"
+      - ""
+      - "<dark_gray>Use /settings to toggle."
+
+  player-info:
+    slot: 34
+    type: MATERIAL
+    material: BOOK
+    name: "<gradient:#00CFFF:#0066FF><bold>Player Info</bold></gradient>"
+    lore:
+      - ""
+      - "<gray>UUID:"
+      - "<white>%uuid%"
+      - ""
+      - "<gray>Username:"
+      - "<aqua>%player%"
+
+  close:
+    slot: 49
+    type: MATERIAL
+    material: BARRIER
+    name: "<red><bold>Close</bold>"
+    lore:
+      - ""
+      - "<gray>Click to close this menu."

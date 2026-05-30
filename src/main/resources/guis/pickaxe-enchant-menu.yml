@@ -1,0 +1,243 @@
+enchants-menu:
+  title: "Nexus Pickaxe Enchants"
+  rows: 6
+
+  filler:
+    enabled: true
+    material: "BLACK_STAINED_GLASS_PANE"
+    name: " "
+    lore: []
+
+  pickaxe-preview:
+    slot: 4
+    name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Nexus Pickaxe</bold></gradient>"
+    lore:
+      - ""
+      - "<gray>Owner: <aqua>%player%</aqua>"
+      - "<gray>Pickaxe Slot: <aqua>%slot%</aqua>"
+      - "<gray>Tokens: <yellow>%tokens%</yellow>"
+      - "<gray>Gems: <light_purple>%gems%</light_purple>"
+      - ""
+      - "<yellow>Click to change your pickaxe slot."
+
+  items:
+    efficiency:
+      slot: 20
+      material: "DIAMOND_PICKAXE"
+      name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Efficiency</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <aqua>%level%</aqua><gray>/<aqua>%max_level%</aqua>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Makes your pickaxe mine faster."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    fortune:
+      slot: 21
+      material: "EMERALD"
+      name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Fortune</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <aqua>%level%</aqua><gray>/<aqua>%max_level%</aqua>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Adds vanilla Fortune to the Nexus Pickaxe."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    haste:
+      slot: 22
+      material: "SUGAR"
+      name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Haste</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <aqua>%level%</aqua><gray>/<aqua>%max_level%</aqua>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Gives Haste while holding your pickaxe."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    speed:
+      slot: 23
+      material: "FEATHER"
+      name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Speed</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <aqua>%level%</aqua><gray>/<aqua>%max_level%</aqua>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Gives Speed while holding your pickaxe."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    token_finder:
+      slot: 24
+      material: "SUNFLOWER"
+      name: "<gradient:#FFD84D:#FFF176:#FFD84D><bold>Token Finder</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <yellow>%level%</yellow><gray>/<yellow>%max_level%</yellow>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Finds extra tokens while mining."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    gem_finder:
+      slot: 29
+      material: "AMETHYST_SHARD"
+      name: "<gradient:#D946EF:#F0ABFC:#D946EF><bold>Gem Finder</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <light_purple>%level%</light_purple><gray>/<light_purple>%max_level%</light_purple>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Finds gems while mining."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    key_finder:
+      slot: 30
+      material: "TRIPWIRE_HOOK"
+      name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Key Finder</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <aqua>%level%</aqua><gray>/<aqua>%max_level%</aqua>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Finds crate keys while mining."
+        - "<dark_gray>Uses the commands in config.yml."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    lucky:
+      slot: 31
+      material: "RABBIT_FOOT"
+      name: "<gradient:#22C55E:#BBF7D0:#22C55E><bold>Lucky</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <green>%level%</green><gray>/<green>%max_level%</green>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Boosts Token, Gem, and Key Finder."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    explosive:
+      slot: 32
+      material: "TNT"
+      name: "<gradient:#FF5555:#FFAA00:#FF5555><bold>Explosive</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <red>%level%</red><gray>/<red>%max_level%</red>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Breaks nearby blocks while mining."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    jackhammer:
+      slot: 33
+      material: "ANVIL"
+      name: "<gradient:#F59E0B:#FDE68A:#F59E0B><bold>Jackhammer</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <gold>%level%</gold><gray>/<gold>%max_level%</gold>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Breaks a full horizontal layer."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+    laser:
+      slot: 34
+      material: "END_ROD"
+      name: "<gradient:#3B82F6:#93C5FD:#3B82F6><bold>Laser</bold></gradient>"
+      lore:
+        - ""
+        - "<gray>Level: <blue>%level%</blue><gray>/<blue>%max_level%</blue>"
+        - "<gray>Next Upgrade: <yellow>%next_cost%</yellow><gray> tokens"
+        - ""
+        - "<white>Breaks blocks in a straight line."
+        - ""
+        - "<yellow>Left-click: <white>+1 Level"
+        - "<yellow>Right-click: <white>+10 Levels"
+        - "<yellow>Shift-click: <white>Max Affordable"
+        - ""
+        - "%status%"
+
+  change-slot:
+    slot: 49
+    material: "NETHERITE_PICKAXE"
+    name: "<gradient:#00CFFF:#54FCFC:#008CFC><bold>Change Pickaxe Slot</bold></gradient>"
+    lore:
+      - ""
+      - "<gray>Current Slot: <aqua>%slot%</aqua>"
+      - ""
+      - "<yellow>Click to choose slots 1-9."
+
+slot-menu:
+  title: "Nexus Pickaxe Slot"
+  rows: 3
+
+  filler:
+    enabled: true
+    material: "BLACK_STAINED_GLASS_PANE"
+    name: " "
+    lore: []
+
+  slots:
+    start-slot: 9
+    current-material: "LIME_STAINED_GLASS_PANE"
+    available-material: "LIGHT_BLUE_STAINED_GLASS_PANE"
+    current-name: "<green><bold>Slot %slot%</bold></green>"
+    available-name: "<aqua><bold>Slot %slot%</bold></aqua>"
+    current-lore:
+      - ""
+      - "<green>Your pickaxe is currently here."
+    available-lore:
+      - ""
+      - "<gray>Click to move your pickaxe here."

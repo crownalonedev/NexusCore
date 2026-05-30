@@ -1,0 +1,15 @@
+enabled: true
+display-name: "Key Finder"
+max-level: 100
+base-token-cost: "25000"
+token-cost-increase: "10000"
+base-chance: 0.0
+chance-per-level: 0.006
+max-chance: 5.0
+min-reward: "1"
+max-reward: "1"
+levels-per-extra-reward: 100000
+extra-reward: "0"
+max-reward-rolls-per-break: 350
+commands:
+  - "crate key give %player% mine %amount%"

@@ -1,0 +1,12 @@
+enabled: true
+display-name: "Jackhammer"
+max-level: 100
+base-token-cost: "7500"
+token-cost-increase: "2500"
+base-chance: 0.0
+chance-per-level: 0.035
+max-chance: 20.0
+horizontal-radius: 4
+radius-increase-every-levels: 40
+max-horizontal-radius: 8
+max-extra-blocks: 256

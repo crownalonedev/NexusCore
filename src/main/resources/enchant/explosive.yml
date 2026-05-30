@@ -1,0 +1,12 @@
+enabled: true
+display-name: "Explosive"
+max-level: 100
+base-token-cost: "5000"
+token-cost-increase: "1750"
+base-chance: 0.0
+chance-per-level: 0.065
+max-chance: 30.0
+radius: 1
+radius-increase-every-levels: 50
+max-radius: 3
+max-extra-blocks: 80

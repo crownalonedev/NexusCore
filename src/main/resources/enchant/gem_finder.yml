@@ -1,0 +1,17 @@
+enabled: true
+display-name: "Gem Finder"
+max-level: 1500
+base-token-cost: "2500"
+token-cost-increase: "900"
+
+# Gems should be rarer than tokens, but still OP Prison-style and worth upgrading.
+base-chance: 3.0
+chance-per-level: 0.018
+max-chance: 55.0
+min-reward: "2"
+max-reward: "8"
+reward-per-level: "1"
+levels-per-extra-reward: 25
+extra-reward: "10"
+reward-multiplier: 1.0
+max-reward-rolls-per-break: 350

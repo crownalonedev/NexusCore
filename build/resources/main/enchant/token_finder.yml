@@ -1,0 +1,18 @@
+enabled: true
+display-name: "Token Finder"
+max-level: 2500
+base-token-cost: "1000"
+token-cost-increase: "450"
+
+# OP Prison style: every broken block from Jackhammer/Explosive/Laser can roll rewards.
+# Example scaling: level 1 = small bursts, level 500+ = huge mining payouts.
+base-chance: 8.0
+chance-per-level: 0.035
+max-chance: 90.0
+min-reward: "50"
+max-reward: "250"
+reward-per-level: "8"
+levels-per-extra-reward: 10
+extra-reward: "25"
+reward-multiplier: 1.0
+max-reward-rolls-per-break: 350

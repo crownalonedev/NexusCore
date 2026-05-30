@@ -1,0 +1,5 @@
+enabled: true
+display-name: "Efficiency"
+max-level: 250
+base-token-cost: "250"
+token-cost-increase: "125"

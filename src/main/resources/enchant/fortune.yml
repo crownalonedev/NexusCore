@@ -1,0 +1,5 @@
+enabled: true
+display-name: "Fortune"
+max-level: 150
+base-token-cost: "500"
+token-cost-increase: "225"
