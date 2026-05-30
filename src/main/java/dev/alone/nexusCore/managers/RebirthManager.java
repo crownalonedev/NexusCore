@@ -7,6 +7,7 @@ import dev.alone.nexusCore.utils.MessageUtil;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
+import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -34,6 +35,8 @@ public class RebirthManager {
         long required = getBlocksRequired(profile);
         long progress = profile.getRankProgressBlocks();
         long remaining = getBlocksRemaining(profile);
+        BigInteger tokenCost = plugin.getProgressionManager().getRebirthTokenCost(profile);
+        BigInteger gemCost = plugin.getProgressionManager().getRebirthGemCost(profile);
 
         MessageUtil.send(player, "");
         MessageUtil.send(player, "<gradient:#00CFFF:#0066FF><bold>Rebirth</bold></gradient>");
@@ -45,6 +48,10 @@ public class RebirthManager {
         MessageUtil.send(player, "  <gray>Blocks: <aqua>" + format(Math.min(progress, required)) + "</aqua><dark_gray>/</dark_gray><aqua>" + format(required) + "</aqua>");
         MessageUtil.send(player, "  <gray>Remaining: <yellow>" + format(remaining) + "</yellow>");
         MessageUtil.send(player, "");
+        MessageUtil.send(player, "<gray>Cost:");
+        MessageUtil.send(player, "  <gray>Tokens: <yellow>" + format(tokenCost) + "</yellow>");
+        MessageUtil.send(player, "  <gray>Gems: <light_purple>" + format(gemCost) + "</light_purple>");
+        MessageUtil.send(player, "");
 
         if (!profile.canRebirth(maxRank)) {
             MessageUtil.send(player, "<red>You must reach rank <white>" + maxRank + "</white><red> before rebirthing.");
@@ -54,7 +61,7 @@ public class RebirthManager {
         if (plugin.getProgressionManager().canRebirth(profile)) {
             MessageUtil.send(player, "<yellow>Use <white>/rebirth confirm</white> to rebirth now.");
         } else {
-            MessageUtil.send(player, "<yellow>Keep mining. Rebirth works like ranking up after rank <white>" + maxRank + "</white><yellow>.");
+            MessageUtil.send(player, "<yellow>Keep mining and collect the required Tokens/Gems to rebirth.");
         }
     }
 
@@ -72,8 +79,21 @@ public class RebirthManager {
             return;
         }
 
-        if (!plugin.getProgressionManager().canRebirth(profile)) {
-            MessageUtil.send(player, "<red>You need <yellow>" + format(getBlocksRemaining(profile)) + "</yellow><red> more blocks before rebirthing.");
+        long blocksRemaining = getBlocksRemaining(profile);
+        if (blocksRemaining > 0) {
+            MessageUtil.send(player, "<red>You need <yellow>" + format(blocksRemaining) + "</yellow><red> more blocks before rebirthing.");
+            return;
+        }
+
+        BigInteger tokenCost = plugin.getProgressionManager().getRebirthTokenCost(profile);
+        if (profile.getTokens().compareTo(tokenCost) < 0) {
+            MessageUtil.send(player, "<red>You need <yellow>" + format(tokenCost) + "</yellow><red> tokens to rebirth.");
+            return;
+        }
+
+        BigInteger gemCost = plugin.getProgressionManager().getRebirthGemCost(profile);
+        if (profile.getGems().compareTo(gemCost) < 0) {
+            MessageUtil.send(player, "<red>You need <light_purple>" + format(gemCost) + "</light_purple><red> gems to rebirth.");
             return;
         }
 
@@ -98,6 +118,10 @@ public class RebirthManager {
     }
 
     private String format(long number) {
+        return NumberFormat.getNumberInstance(Locale.US).format(number);
+    }
+
+    private String format(BigInteger number) {
         return NumberFormat.getNumberInstance(Locale.US).format(number);
     }
 }
