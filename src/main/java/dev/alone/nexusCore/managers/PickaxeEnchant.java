@@ -34,7 +34,28 @@ public enum PickaxeEnchant {
     VOLCANO("volcano", "Volcano", 475),
     HYDROGEN_BOMB("hydrogen_bomb", "Hydrogen Bomb", 500),
     PROPHET("prophet", "Prophet", 550),
-    BLACK_HOLE("black_hole", "Black Hole", 600);
+    BLACK_HOLE("black_hole", "Black Hole", 600),
+
+    LOTTERY("lottery", "Lottery", 25),
+    SHATTER("shatter", "Shatter", 35),
+    JACKPOT("jackpot", "Jackpot", 40),
+    METEORITE("meteorite", "Meteorite", 50),
+    FIRECRACKER("firecracker", "Firecracker", 75),
+    DRAGONS_EYE("dragons_eye", "Dragons Eye", 100),
+    FIRECRACKS("firecracks", "Firecracks", 125),
+    PET_XP_FINDER("pet_xp_finder", "Pet XP Finder", 125),
+    CHARITY("charity", "Charity", 150),
+    EXCAVATOR("excavator", "Excavator", 175),
+    ARCTIC_DESTROYER("arctic_destroyer", "Arctic Destroyer", 200),
+    DYNAMITE("dynamite", "Dynamite", 250),
+    HIRED_HAND("hired_hand", "Hired Hand", 300),
+    SOUL_REAPER("soul_reaper", "Soul Reaper", 325),
+    OVERFLOW("overflow", "Overflow", 350),
+    CHUGGERNAUT("chuggernaut", "Chuggernaut", 400),
+    HEROS_ASSISTANCE("heros_assistance", "Heros Assistance", 450),
+    SNOWSTORM("snowstorm", "Snowstorm", 500),
+    INVASION("invasion", "Invasion", 550),
+    BLESSED("blessed", "Blessed", 600);
 
     private final String id;
     private final String displayName;
@@ -84,8 +105,16 @@ public enum PickaxeEnchant {
             normalized = "dragons_wrath";
         }
 
+        if (normalized.equals("dragon_eye")) {
+            normalized = "dragons_eye";
+        }
+
         if (normalized.equals("gang_points") || normalized.equals("gang_point_miner")) {
             normalized = "gang_point_finder";
+        }
+
+        if (normalized.equals("hero_assistance") || normalized.equals("hero's_assistance")) {
+            normalized = "heros_assistance";
         }
 
         for (PickaxeEnchant enchant : values()) {
