@@ -105,28 +105,23 @@ public final class ProgressionManager {
             return;
         }
 
-        if (!profile.isAutoRebirth()) {
-            if (rankups > 0) {
-                sendProgressionMessage(
-                        player,
-                        "max-rank",
-                        "<yellow>You reached max rank. Keep mining for rebirth progress.",
-                        profile
-                );
-            }
-
-            return;
+        if (rankups > 0) {
+            sendProgressionMessage(
+                    player,
+                    "max-rank",
+                    "<yellow>You reached max rank. Rank is now capped, so keep mining for rebirth progress.",
+                    profile
+            );
         }
 
         int rebirthsProcessed = 0;
 
-        while (profile.isAutoRebirth() && canRebirth(profile)) {
-            attemptRebirth(player, profile, true);
-            rebirthsProcessed++;
-
-            if (profile.isAutoAscension()) {
-                attemptAscension(player, profile, true);
+        while (canRebirth(profile)) {
+            if (!attemptRebirth(player, profile, true)) {
+                break;
             }
+
+            rebirthsProcessed++;
 
             if (rebirthsProcessed >= 100) {
                 break;
@@ -153,20 +148,16 @@ public final class ProgressionManager {
         }
 
         int maxRank = plugin.getProfileManager().getMaxRank();
+        long blocksRequired = getBlocksRequiredForNextRebirth(profile);
 
+        profile.removeRankProgressBlocks(blocksRequired);
         profile.rebirth(maxRank);
-        profile.resetRankProgressBlocks();
-
-        if (plugin.getConfig().getBoolean("rebirth.reset-rank", true)) {
-            int rankAfterRebirth = plugin.getConfig().getInt("rebirth.rank-after-rebirth", 1);
-            profile.setRank(rankAfterRebirth, maxRank);
-        }
 
         if (automatic) {
             sendProgressionMessage(
                     player,
                     "auto-rebirth",
-                    "<light_purple>Auto Rebirth complete! You are now <white>%rebirth%<light_purple>.",
+                    "<light_purple>Rebirth complete! You are now <white>%rebirth%<light_purple>.",
                     profile
             );
         } else {
@@ -240,7 +231,7 @@ public final class ProgressionManager {
 
         int maxRank = plugin.getProfileManager().getMaxRank();
 
-        return profile.canRebirth(maxRank);
+        return profile.canRebirth(maxRank) && profile.getRankProgressBlocks() >= getBlocksRequiredForNextRebirth(profile);
     }
 
     public long getBlocksRequiredForNextRank(PlayerProfile profile) {
@@ -445,7 +436,10 @@ public final class ProgressionManager {
 
                 .replace("%rebirths_required%", String.valueOf(rebirthsRequired))
                 .replace("%rebirths_until_ascension%", String.valueOf(profile.getRebirthsUntilAscension(rebirthsRequired)))
+                .replace("%blocks_progress_rebirth%", String.valueOf(profile.getRankProgressBlocks()))
+                .replace("%rebirth_progress%", String.valueOf(profile.getRankProgressBlocks()))
                 .replace("%blocks_required_rebirth%", String.valueOf(getBlocksRequiredForNextRebirth(profile)))
+                .replace("%rebirth_requirement%", String.valueOf(getBlocksRequiredForNextRebirth(profile)))
                 .replace("%blocks_remaining_rebirth%", String.valueOf(getBlocksRemainingForNextRebirth(profile)));
 
         MessageUtil.sendWithPrefix(player, message);
