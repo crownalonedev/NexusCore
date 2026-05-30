@@ -67,24 +67,17 @@ public final class ActionBarManager {
     }
 
     private Component buildActionBar(PlayerProfile profile) {
-        if (profile.getRebirth() <= 0) {
-            return buildRankupActionBar(profile);
+        int maxRank = plugin.getProfileManager().getMaxRank();
+
+        if (profile.isMaxRank(maxRank)) {
+            return buildRebirthActionBar(profile);
         }
 
-        return buildRebirthActionBar(profile);
+        return buildRankupActionBar(profile);
     }
 
     private Component buildRankupActionBar(PlayerProfile profile) {
         int maxRank = plugin.getProfileManager().getMaxRank();
-
-        if (profile.isMaxRank(maxRank)) {
-            String format = plugin.getConfig().getString(
-                    "action-bar.formats.ready-rebirth",
-                    "<gradient:#00CFFF:#0066FF><bold>MAX RANK</bold></gradient> <dark_gray>┃</dark_gray> %bar% <gray>100%</gray> <dark_gray>┃</dark_gray> <#FCFC54>Ready for /rebirth</#FCFC54>"
-            );
-
-            return MINI_MESSAGE.deserialize(format.replace("%bar%", buildBar(1.0D)));
-        }
 
         long current = profile.getRankProgressBlocks();
         long required = plugin.getProgressionManager().getBlocksRequiredForNextRank(profile);
@@ -106,15 +99,9 @@ public final class ActionBarManager {
     }
 
     private Component buildRebirthActionBar(PlayerProfile profile) {
-        int maxRank = plugin.getProfileManager().getMaxRank();
-
-        long current = profile.getRank();
-        long required = maxRank;
+        long current = profile.getRankProgressBlocks();
+        long required = plugin.getProgressionManager().getBlocksRequiredForNextRebirth(profile);
         double progress = getProgress(current, required);
-
-        String status = profile.isMaxRank(maxRank)
-                ? "Ready for /rebirth"
-                : "Rank " + formatCompact(current) + " / " + formatCompact(required);
 
         String format = plugin.getConfig().getString(
                 "action-bar.formats.rebirth",
@@ -127,7 +114,7 @@ public final class ActionBarManager {
                         .replace("%next_rebirth%", String.valueOf(profile.getRebirth() + 1))
                         .replace("%bar%", buildBar(progress))
                         .replace("%percent%", getPercent(progress))
-                        .replace("%detail%", status)
+                        .replace("%detail%", formatCompact(Math.min(current, required)) + " / " + formatCompact(required) + " Blocks")
         );
     }
 
