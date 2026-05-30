@@ -67,6 +67,11 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (args[0].equalsIgnoreCase("setpickaxelevel") || args[0].equalsIgnoreCase("setpicklevel")) {
+            handleSetPickaxeLevel(sender, args);
+            return true;
+        }
+
         if (args[0].equalsIgnoreCase("addblocks")) {
             handleAddBlocks(sender, args);
             return true;
@@ -107,6 +112,7 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
             MessageUtil.send(sender, "<aqua>/nexuscore setrank <player> <rank> <gray>- Set a player's rank.");
             MessageUtil.send(sender, "<aqua>/nexuscore setrebirth <player> <amount> <gray>- Set a player's rebirths.");
             MessageUtil.send(sender, "<aqua>/nexuscore setascension <player> <amount> <gray>- Set a player's ascensions.");
+            MessageUtil.send(sender, "<aqua>/nexuscore setpickaxelevel <player> <level> <gray>- Set a player's pickaxe level.");
             MessageUtil.send(sender, "<aqua>/nexuscore addblocks <player> <amount> <gray>- Add mining progress blocks.");
             MessageUtil.send(sender, "<aqua>/nexuscore resetprogress <player> <gray>- Reset rank, rebirths, and ascensions.");
             MessageUtil.send(sender, "<aqua>/nexuscore currency set <player> <currency> <amount> <gray>- Set currency.");
@@ -127,7 +133,6 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.reloadPlugin();
-
         MessageUtil.sendWithPrefix(sender, MessageUtil.getMessage("messages.reload"));
 
         if (sender instanceof Player player) {
@@ -161,14 +166,12 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         Player target = Bukkit.getPlayerExact(args[1]);
-
         if (target == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
             return;
         }
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(target);
-
         if (profile == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
             return;
@@ -247,7 +250,6 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.getProfileManager().saveProfile(target.getUniqueId());
-
         String formatted = plugin.getCurrencyManager().formatCurrency(profile, currency);
         String displayName = plugin.getCurrencyManager().getDisplayName(currency);
 
@@ -270,21 +272,18 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         Player target = getTarget(args[1]);
-
         if (target == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
             return;
         }
 
         Integer rank = parseInteger(args[2]);
-
         if (rank == null) {
             MessageUtil.sendWithPrefix(sender, "<red>Rank must be a number.");
             return;
         }
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(target);
-
         if (profile == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
             return;
@@ -309,21 +308,18 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         Player target = getTarget(args[1]);
-
         if (target == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
             return;
         }
 
         Integer rebirth = parseInteger(args[2]);
-
         if (rebirth == null) {
             MessageUtil.sendWithPrefix(sender, "<red>Rebirth amount must be a number.");
             return;
         }
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(target);
-
         if (profile == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
             return;
@@ -347,21 +343,18 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         Player target = getTarget(args[1]);
-
         if (target == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
             return;
         }
 
         Integer ascension = parseInteger(args[2]);
-
         if (ascension == null) {
             MessageUtil.sendWithPrefix(sender, "<red>Ascension amount must be a number.");
             return;
         }
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(target);
-
         if (profile == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
             return;
@@ -372,6 +365,45 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
 
         MessageUtil.sendWithPrefix(sender, "<green>Set <aqua>" + target.getName() + "<green>'s ascensions to <white>" + profile.getAscension() + "<green>.");
         MessageUtil.sendWithPrefix(target, "<gray>Your ascensions have been set to <gold>" + profile.getAscension() + "<gray>.");
+    }
+
+    private void handleSetPickaxeLevel(CommandSender sender, String[] args) {
+        if (!checkAdmin(sender)) {
+            return;
+        }
+
+        if (args.length < 3) {
+            MessageUtil.sendWithPrefix(sender, "<red>Usage: <white>/nexuscore setpickaxelevel <player> <level>");
+            return;
+        }
+
+        Player target = getTarget(args[1]);
+        if (target == null) {
+            MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
+            return;
+        }
+
+        Integer level = parseInteger(args[2]);
+        if (level == null || level < 1) {
+            MessageUtil.sendWithPrefix(sender, "<red>Pickaxe level must be a positive number.");
+            return;
+        }
+
+        PlayerProfile profile = plugin.getProfileManager().getProfile(target);
+        if (profile == null) {
+            MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
+            return;
+        }
+
+        int maxLevel = plugin.getPickaxeManager().getMaxPickaxeLevel();
+        profile.setPickaxeLevel(Math.min(level, maxLevel));
+        profile.setPickaxeXp(0L);
+        plugin.getPickaxeManager().updateExperienceBar(target, profile);
+        plugin.getPickaxeManager().syncPickaxe(target);
+        plugin.getProfileManager().saveProfile(target.getUniqueId());
+
+        MessageUtil.sendWithPrefix(sender, "<green>Set <aqua>" + target.getName() + "<green>'s pickaxe level to <white>" + profile.getPickaxeLevel() + "<green>.");
+        MessageUtil.sendWithPrefix(target, "<gray>Your pickaxe level has been set to <aqua>" + profile.getPickaxeLevel() + "<gray>.");
     }
 
     private void handleAddBlocks(CommandSender sender, String[] args) {
@@ -385,21 +417,18 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         Player target = getTarget(args[1]);
-
         if (target == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
             return;
         }
 
         Long blocks = parseLong(args[2]);
-
         if (blocks == null || blocks <= 0) {
             MessageUtil.sendWithPrefix(sender, "<red>Block amount must be a positive number.");
             return;
         }
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(target);
-
         if (profile == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
             return;
@@ -422,14 +451,12 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         }
 
         Player target = getTarget(args[1]);
-
         if (target == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player is not online.");
             return;
         }
 
         PlayerProfile profile = plugin.getProfileManager().getProfile(target);
-
         if (profile == null) {
             MessageUtil.sendWithPrefix(sender, "<red>That player's profile is not loaded.");
             return;
@@ -440,7 +467,6 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
         profile.setRebirth(0);
         profile.setAscension(0);
         profile.resetRankProgressBlocks();
-
         plugin.getProfileManager().saveProfile(target.getUniqueId());
 
         MessageUtil.sendWithPrefix(sender, "<green>Reset progression for <aqua>" + target.getName() + "<green>.");
@@ -479,7 +505,16 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
 
     private Long parseLong(String input) {
         try {
-            return Long.parseLong(input);
+            String normalized = input.toLowerCase().replace(",", "");
+            long multiplier = 1L;
+            if (normalized.endsWith("k")) {
+                multiplier = 1_000L;
+                normalized = normalized.substring(0, normalized.length() - 1);
+            } else if (normalized.endsWith("m")) {
+                multiplier = 1_000_000L;
+                normalized = normalized.substring(0, normalized.length() - 1);
+            }
+            return Long.parseLong(normalized) * multiplier;
         } catch (NumberFormatException exception) {
             return null;
         }
@@ -490,7 +525,6 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             List<String> completions = new ArrayList<>();
-
             completions.add("help");
             completions.add("version");
 
@@ -501,6 +535,8 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
                 completions.add("setrank");
                 completions.add("setrebirth");
                 completions.add("setascension");
+                completions.add("setpickaxelevel");
+                completions.add("setpicklevel");
                 completions.add("addblocks");
                 completions.add("resetprogress");
                 completions.add("saveprofiles");
@@ -531,6 +567,10 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 3 && args[0].equalsIgnoreCase("setascension")) {
             return filter(List.of("0", "1", "5", "10", "25", "50", "100"), args[2]);
+        }
+
+        if (args.length == 3 && (args[0].equalsIgnoreCase("setpickaxelevel") || args[0].equalsIgnoreCase("setpicklevel"))) {
+            return filter(List.of("1", "25", "50", "100", "250", "500", "750", "900", "950"), args[2]);
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("addblocks")) {
@@ -569,6 +609,8 @@ public final class NexusCoreCommand implements CommandExecutor, TabCompleter {
                 || commandName.equalsIgnoreCase("setrank")
                 || commandName.equalsIgnoreCase("setrebirth")
                 || commandName.equalsIgnoreCase("setascension")
+                || commandName.equalsIgnoreCase("setpickaxelevel")
+                || commandName.equalsIgnoreCase("setpicklevel")
                 || commandName.equalsIgnoreCase("addblocks")
                 || commandName.equalsIgnoreCase("resetprogress");
     }
