@@ -90,18 +90,10 @@ progression:
 rebirth:
   enabled: true
 
-  costs:
-    tokens:
-      base: 100000
-      increase-per-rebirth: 75000
-
-    gems:
-      base: 250
-      increase-per-rebirth: 175
-
-  reset-rank: true
-  rank-after-rebirth: 1
-
+  # Rebirth no longer resets rank. After rank 1000, rebirth behaves like ranking up.
+  # Players stay rank 1000 forever, so max-rank mine unlocks stay unlocked forever.
+  reset-rank: false
+  rank-after-rebirth: 1000
   reset-blocks-mined: false
 
 scoreboard:
@@ -129,6 +121,7 @@ scoreboard:
       - ""
       - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
       - "  &fRank: &b%rank_raw%"
+      - "  &fRebirth Progress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
       - "  &fBlocks Mined: &a%blocks_mined%"
       - "  &fGang: &b%gang%"
       - ""
@@ -142,7 +135,9 @@ scoreboard:
     rebirth:
       - ""
       - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
+      - "  &fRank: &b%rank_raw%"
       - "  &fRebirth: &d%rebirth%"
+      - "  &fProgress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
       - "  &fBlocks Mined: &a%blocks_mined%"
       - "  &fGang: &b%gang%"
       - ""
@@ -156,6 +151,7 @@ scoreboard:
     ascension:
       - ""
       - "<gradient:#008CFC:#54FCFC:#008CFC><bold>%player_name%</bold></gradient>"
+      - "  &fRank: &b%rank_raw%"
       - "  &fRebirth: &d%rebirth%"
       - "  &fAscension: &6%ascension%"
       - "  &fProgress: &a%rebirth_progress%&7/&a%rebirth_requirement%"
@@ -223,10 +219,10 @@ messages:
   progression:
     rankup: "<green>You ranked up to <aqua>Rank %rank%<green>!"
     multi-rankup: "<green>You ranked up <aqua>%rankups%x <green>and reached <aqua>Rank %rank%<green>!"
-    max-rank: "<yellow>You reached max rank. Keep mining for rebirth progress."
+    max-rank: "<yellow>You reached max rank. Rank is now capped, so keep mining for rebirth progress."
     cannot-rebirth: "<red>You need <white>%blocks_remaining_rebirth% <red>more blocks before rebirthing."
     rebirth: "<light_purple>You rebirthed! You are now <white>%rebirth%<light_purple>."
-    auto-rebirth: "<light_purple>Auto Rebirth complete! You are now <white>%rebirth%<light_purple>."
+    auto-rebirth: "<light_purple>Rebirth complete! You are now <white>%rebirth%<light_purple>."
     cannot-ascend: "<red>You need <white>%rebirths_until_ascension% <red>more rebirths before ascending."
     ascension: "<gold>You ascended! Your rebirths have reset. You are now <white>%ascension%<gold>."
     auto-ascension: "<gold>Auto Ascension complete! Your rebirths have reset. You are now <white>%ascension%<gold>."
@@ -326,8 +322,6 @@ pickaxe:
     allow-creative: false
     reward-actionbar:
       enabled: true
-
-
 
 private-mines:
   enabled: true
@@ -444,6 +438,6 @@ action-bar:
     empty: "#1B2A36"
 
   formats:
-    rankup: "<gradient:#00CFFF:#0066FF><bold>RANKUP</bold></gradient> <dark_gray>┃</dark_gray> <white>Rank <#00CFFF>%current%</#00CFFF> <gray>➜</gray> <#0066FF>%next%</#0066FF> <dark_gray>┃</dark_gray> %bar% <gray>%percent%%</gray> <dark_gray>┃</dark_gray>"
-    rebirth: "<gradient:#00CFFF:#0066FF><bold>REBIRTH</bold></gradient> <dark_gray>┃</dark_gray> <white>RB <#00CFFF>%current_rebirth%</#00CFFF> <gray>➜</gray> <#0066FF>%next_rebirth%</#0066FF> <dark_gray>┃</dark_gray> %bar% <gray>%percent%%</gray> <dark_gray>┃</dark_gray>"
-    ready-rebirth: "<gradient:#00CFFF:#0066FF><bold>MAX RANK</bold></gradient> <dark_gray>┃</dark_gray> %bar% <gray>100%</gray> <dark_gray>┃</dark_gray> <#FCFC54>Ready for /rebirth</#FCFC54>"
+    rankup: "<gradient:#00CFFF:#0066FF><bold>RANKUP</bold></gradient> <dark_gray>┃</dark_gray> <white>Rank <#00CFFF>%current%</#00CFFF> <gray>➜</gray> <#0066FF>%next%</#0066FF> <dark_gray>┃</dark_gray> %bar% <gray>%percent%%</gray> <dark_gray>┃</dark_gray> <#FCFC54>%detail%</#FCFC54>"
+    rebirth: "<gradient:#00CFFF:#0066FF><bold>REBIRTH</bold></gradient> <dark_gray>┃</dark_gray> <white>RB <#00CFFF>%current_rebirth%</#00CFFF> <gray>➜</gray> <#0066FF>%next_rebirth%</#0066FF> <dark_gray>┃</dark_gray> %bar% <gray>%percent%%</gray> <dark_gray>┃</dark_gray> <#FCFC54>%detail%</#FCFC54>"
+    ready-rebirth: "<gradient:#00CFFF:#0066FF><bold>REBIRTH READY</bold></gradient> <dark_gray>┃</dark_gray> %bar% <gray>100%</gray> <dark_gray>┃</dark_gray> <#FCFC54>/rebirth confirm</#FCFC54>"
