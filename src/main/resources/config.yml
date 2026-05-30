@@ -99,8 +99,6 @@ rebirth:
       base: 250
       increase-per-rebirth: 175
 
-  # Rebirth no longer resets rank. After rank 1000, rebirth behaves like ranking up.
-  # Players stay rank 1000 forever, so max-rank mine unlocks stay unlocked forever.
   reset-rank: false
   rank-after-rebirth: 1000
   reset-blocks-mined: false
@@ -306,19 +304,11 @@ pickaxe:
   give-if-missing-on-join: true
   default-slot: 0
   material: "NETHERITE_PICKAXE"
-  name: "<gradient:#00CFFF:#0066FF><bold>Nexus Pickaxe</bold></gradient>"
-  lore:
-    - ""
-    - "<gray>Owner: <aqua>%player%</aqua>"
-    - "<gray>Slot: <aqua>%slot%</aqua>"
-    - "<gray>Pickaxe Level: <aqua>%pickaxe_level%</aqua>"
-    - "<gray>Pickaxe XP: <aqua>%pickaxe_xp%</aqua><dark_gray>/</dark_gray><aqua>%pickaxe_xp_required%</aqua>"
-    - "<gray>Tokens: <yellow>%tokens%</yellow> <dark_gray>|</dark_gray> <gray>Gems: <light_purple>%gems%</light_purple> <dark_gray>|</dark_gray> <gray>Beacons: <aqua>%beacons%</aqua>"
-    - ""
-    - "<yellow>Right-click to open enchants."
+  name: "<gradient:#00CFFF:#0066FF><bold>%player%'s Pickaxe</bold></gradient>"
+  starter-token-miner-level: 10
 
   leveling:
-    max-level: 500
+    max-level: 950
     xp-base: 250
     xp-increase-per-level: 125
 
@@ -335,9 +325,6 @@ pickaxe:
 private-mines:
   enabled: true
   world: "nexus_private_mines"
-
-  # The saved base Y includes the empty bottom layers.
-  # With empty-bottom-layers: 2, this makes the first mineable blocks start at Y 116.
   base-y: 114
   mine-block-start-y: 116
   spacing: 1500
@@ -360,13 +347,10 @@ private-mines:
     enabled: true
     rank-cap: 1000
     levels-per-upgrade: 25
-
     base-radius: 12
     base-height: 30
-
     max-radius: 55
     max-height: 75
-
     reset-blocks-per-tick: 3500
 
   default-palette:
@@ -432,8 +416,6 @@ action-bar:
   enabled: true
   update-interval-ticks: 20
   bar-length: 16
-
-  # Leave empty to show in every world.
   worlds: []
 
   symbols:
