@@ -17,6 +17,7 @@ import dev.alone.nexusCore.listeners.MineMenuListener;
 import dev.alone.nexusCore.listeners.MiningListener;
 import dev.alone.nexusCore.listeners.PickaxeEnchantListener;
 import dev.alone.nexusCore.listeners.PickaxeListener;
+import dev.alone.nexusCore.listeners.PickaxeMenuPolishListener;
 import dev.alone.nexusCore.listeners.ProfileListener;
 import dev.alone.nexusCore.listeners.ScoreboardListener;
 import dev.alone.nexusCore.managers.*;
@@ -207,6 +208,7 @@ public final class NexusCore extends JavaPlugin {
         registerListener(new MenuListener());
         registerListener(new MiningListener(this));
         registerListener(new PickaxeEnchantListener(this));
+        registerListener(new PickaxeMenuPolishListener(this));
         registerListener(new ChatListener(this));
         registerListener(new ScoreboardListener(this));
         registerListener(new PickaxeListener(this));
@@ -258,15 +260,9 @@ public final class NexusCore extends JavaPlugin {
         }
 
         send(console, "");
-        send(console, "        <gray>Plugin:</gray> <white>NexusCore");
-        send(console, "        <gray>Version:</gray> <white>" + getDescription().getVersion());
-        send(console, "        <gray>Author:</gray> <white>Alone");
-        send(console, "        <gray>Server:</gray> <gradient:#00CFFF:#0066FF>Nexus Network</gradient>");
-        send(console, "        <gray>Status:</gray> " + status);
-        send(console, "");
-        send(console, "        <dark_gray>»</dark_gray> <white>" + lineOne);
-        send(console, "        <dark_gray>»</dark_gray> <white>" + lineTwo);
-        send(console, "");
+        send(console, status);
+        send(console, "<gray>" + lineOne);
+        send(console, "<dark_gray>" + lineTwo);
         send(console, gradient + "<bold>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</bold></gradient>");
         send(console, "");
     }
